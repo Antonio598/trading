@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --void: #05070d;
+  --void-2: #0b1020;
+  --cyan: #00e5ff;
+  --bull: #00ff9c;
+  --bear: #ff2e63;
+  --warn: #ffb800;
+  --ink: rgba(255, 255, 255, 0.9);
+  --dim: #8a94a6;
+  --cut: 12px;
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--void);
+  color: var(--ink);
+  font-family: Inter, system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(0, 229, 255, 0.08), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(0, 255, 156, 0.05), transparent 60%),
+    linear-gradient(180deg, #05070d 0%, #0b1020 100%);
+  background-attachment: fixed;
+}
+
+/* Cuadrícula + líneas de escaneo muy tenues */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+body::before {
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse at center, black 40%, transparent 85%);
+}
+body::after {
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 3px);
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Pantalla de carga */
+#boot {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+}
+.boot-ring {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 229, 255, 0.15);
+  border-top-color: var(--cyan);
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.35);
+  animation: spin 0.9s linear infinite;
+}
+.boot-text {
+  font-family: Orbitron, sans-serif;
+  letter-spacing: 0.35em;
+  color: var(--cyan);
+  font-size: 13px;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@layer components {
+  .font-num {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Panel de vidrio con esquinas cortadas en diagonal */
+  .hud-panel {
+    position: relative;
+    background: linear-gradient(160deg, rgba(17, 24, 49, 0.72), rgba(11, 16, 32, 0.6));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+  }
+  .hud-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: linear-gradient(140deg, rgba(0, 229, 255, 0.45), rgba(138, 148, 166, 0.12) 40%, rgba(0, 229, 255, 0.2));
+    clip-path: inherit;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .hud-label {
+    font-family: 'Space Grotesk', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 11px;
+    color: var(--dim);
+  }
+
+  .hud-input {
+    @apply w-full bg-void/70 px-3 py-3 text-lg text-ink outline-none transition;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    border: 1px solid rgba(138, 148, 166, 0.3);
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  }
+  .hud-input:focus {
+    border-color: var(--cyan);
+    box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.4);
+  }
+
+  .btn-primary {
+    @apply relative inline-flex min-h-[52px] items-center justify-center gap-2 px-5 font-display text-sm font-bold uppercase tracking-[0.16em] transition active:scale-[0.98] disabled:opacity-40 disabled:active:scale-100;
+    color: #031015;
+    background: var(--cyan);
+    box-shadow: 0 0 22px rgba(0, 229, 255, 0.45);
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  }
+  .btn-ghost {
+    @apply relative inline-flex min-h-[48px] items-center justify-center gap-2 px-4 font-grotesk text-sm font-bold uppercase tracking-[0.12em] text-ink transition active:scale-[0.98] disabled:opacity-40;
+    background: rgba(0, 229, 255, 0.06);
+    border: 1px solid rgba(0, 229, 255, 0.35);
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-ring {
+    animation-duration: 3s;
+  }
+}
