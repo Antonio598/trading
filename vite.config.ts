@@ -60,6 +60,15 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        // config.js lo genera el servidor con las variables de entorno: nunca precachear la versión vacía.
+        globIgnores: ['config.js'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname === '/config.js',
+            handler: 'NetworkFirst',
+            options: { cacheName: 'vj-config', networkTimeoutSeconds: 3 },
+          },
+        ],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
       },

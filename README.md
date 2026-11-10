@@ -42,6 +42,29 @@ Las migraciones están en `supabase/migrations/`. Todas las tablas llevan el pre
 - `0001_vj_init.sql` — tablas de perfil, trades, salidas, revisiones y reglas.
 - `0002_vj_screenshots.sql` — bucket privado para las fotos de los gráficos.
 
-## Publicar
+## Publicar en Easypanel (Docker)
 
-`api/analizar.ts` es una función lista para **Vercel**. Configura ahí `ANTHROPIC_API_KEY`, `SUPABASE_URL` y `SUPABASE_ANON_KEY` (además de las `VITE_*` para el build).
+1. En Easypanel: **Create service → App**, fuente **GitHub** (`Antonio598/trading`, rama `main`), build con **Dockerfile**.
+2. En **Environment** agrega:
+   ```
+   SUPABASE_URL=https://tu-supabase
+   SUPABASE_ANON_KEY=tu-anon-key
+   ANTHROPIC_API_KEY=tu-llave        # opcional: activa el coach con IA
+   ```
+   Se leen al arrancar: si cambias una, basta con reiniciar (no hay que reconstruir).
+3. En **Domains** apunta tu dominio al puerto **3000** y activa HTTPS.
+
+Revisa que el servidor responde en `/healthz`.
+
+Importante: si la app se sirve con `https://`, Supabase también debe estar en `https://` (el navegador bloquea llamadas de una página segura a un servidor `http://`).
+
+Para probar la imagen en local:
+
+```bash
+docker build -t velez-hud .
+docker run -p 3000:3000 -e SUPABASE_URL=... -e SUPABASE_ANON_KEY=... velez-hud
+```
+
+Sin Docker: `npm run build && npm run build:server && npm start`.
+
+También existe `api/analizar.ts` por si prefieres publicar en **Vercel**.

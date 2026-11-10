@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+/** En Docker la configuración llega en /config.js (leída del entorno al arrancar); en desarrollo, de .env.local. */
+const runtime = (globalThis as { __VJ_CONFIG__?: { supabaseUrl?: string; supabaseAnonKey?: string } }).__VJ_CONFIG__ ?? {};
+const url = runtime.supabaseUrl || (import.meta.env.VITE_SUPABASE_URL as string | undefined);
+const anon = runtime.supabaseAnonKey || (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined);
 
 export const supabaseConfigured = !!url && !!anon;
 

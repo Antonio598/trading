@@ -8,3 +8,8 @@ dev-dist
 
 # Configuración local de Claude Code
 .claude/
+dist-server
+*.tsbuildinfo
+
+# Copias locales con datos reales (correo/contraseña)
+*.local.sql

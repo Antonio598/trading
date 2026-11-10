@@ -1,0 +1,13 @@
+node_modules
+dist
+dist-server
+dev-dist
+.git
+.claude
+.agents
+.env
+.env.*
+!.env.example
+*.log
+Dockerfile
+.dockerignore
