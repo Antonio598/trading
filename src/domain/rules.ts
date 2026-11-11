@@ -179,7 +179,7 @@ export const CRITICAL_TEXT: Record<string, DirText> = {
     short: 'Falta la señal de reversa. En ventas tras 3–5 velas de rally es obligatoria (TT, RBR, NRB o NB).',
   },
   contra_no_climatico: 'Contra tendencia solo se permiten setups climáticos (CDB o CAS).',
-  no_cabe_en_r: 'Este trade no cabe en tu R. No se opera.',
+  no_cabe_en_r: 'Este trade no cabe en tu R: ni 1 acción (o 1 contrato) entra en tu riesgo. No se opera.',
   stop_invalido: {
     long: 'El stop debe estar por debajo de la entrada.',
     short: 'El stop debe estar por encima de la entrada.',

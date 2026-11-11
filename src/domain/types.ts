@@ -1,4 +1,5 @@
 export type Direction = 'long' | 'short';
+export type Instrument = 'stock' | 'option';
 export type Timeframe = 1 | 2 | 5 | 15 | 60;
 export type TrendType = 'regular' | 'poder' | 'super' | 'lateral' | 'contra';
 export type MaState = 'estrecho' | 'neutral' | 'amplio';
@@ -64,6 +65,8 @@ export const DEFAULT_PROFILE: Profile = {
 /** Estado completo de la checklist (se guarda tal cual en checklist_json). */
 export interface ChecklistState {
   symbol: string;
+  /** Acciones u opciones (en opciones: entrada/stop son primas y la cantidad son contratos). */
+  instrument: Instrument;
   direction: Direction;
   timeframe: Timeframe;
   // Paso 1 — contexto
@@ -103,6 +106,7 @@ export interface ChecklistState {
 
 export const EMPTY_CHECKLIST: ChecklistState = {
   symbol: '',
+  instrument: 'stock',
   direction: 'long',
   timeframe: 5,
   chartOk: false,
@@ -140,6 +144,10 @@ export interface TradeRow {
   user_id?: string;
   created_at: string;
   symbol: string;
+  /** Ausente en trades viejos = acciones. */
+  instrument?: Instrument;
+  /** 1 en acciones, 100 en opciones. */
+  multiplier?: number;
   direction: Direction;
   timeframe: Timeframe;
   setup: SetupId;

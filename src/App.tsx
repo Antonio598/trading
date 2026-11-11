@@ -1,6 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { MotionConfig } from 'framer-motion';
-import { BarChart3, BookOpen, CloudOff, ClipboardCheck, List, RefreshCw, SlidersHorizontal } from 'lucide-react';
+import { BarChart3, BookOpen, CloudOff, List, Plus, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { ETClock } from './components/hud/ETClock';
@@ -19,7 +19,7 @@ function Boot() {
   return (
     <div id="boot">
       <div className="boot-ring" />
-      <div className="boot-text">VELEZ&nbsp;HUD</div>
+      <div className="boot-text">Velez</div>
     </div>
   );
 }
@@ -28,41 +28,79 @@ function SyncBadge() {
   const { pending, syncing, online, sync } = useJournal();
   if (!online)
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-warn" role="status">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-warn/15 px-3 py-1 text-[12px] font-bold text-warn" role="status">
         <CloudOff size={13} /> Sin internet{pending ? ` · ${pending} por subir` : ''}
       </span>
     );
   if (pending || syncing)
     return (
-      <button onClick={() => sync()} className="inline-flex items-center gap-1 text-[11px] text-cyan-neon" aria-label="Sincronizar">
-        <RefreshCw size={13} className={cx(syncing && 'animate-spin')} /> {pending || ''}
+      <button onClick={() => sync()} className="inline-flex items-center gap-1.5 rounded-full bg-void-3 px-3 py-1 text-[12px] font-bold text-ink-dim" aria-label="Sincronizar">
+        <RefreshCw size={13} className={cx(syncing && 'animate-spin')} /> {syncing ? 'Guardando' : `${pending} por subir`}
       </button>
     );
   return null;
 }
 
+/** Barra inferior: cuatro secciones y, al centro, el botón para un trade nuevo. */
+function BottomNav() {
+  const side = (to: string, label: string, Icon: typeof List) => (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        cx('flex flex-col items-center justify-center gap-1 text-[11px] font-bold transition', isActive ? 'text-ink' : 'text-ink-dim hover:text-ink/80')
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <span className={cx('grid h-8 w-12 place-items-center rounded-full transition', isActive && 'bg-accent/[0.16] text-accent')}>
+            <Icon size={20} strokeWidth={isActive ? 2.4 : 2} />
+          </span>
+          {label}
+        </>
+      )}
+    </NavLink>
+  );
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/[0.05] bg-void-2/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl" aria-label="Secciones">
+      <div className="mx-auto grid h-[68px] max-w-xl grid-cols-5 px-2">
+        {side('/trades', 'Trades', List)}
+        {side('/progreso', 'Progreso', BarChart3)}
+        <NavLink to="/" end aria-label="Nuevo trade" className="flex flex-col items-center justify-start" title="Nuevo trade">
+          {({ isActive }) => (
+            <span
+              className={cx(
+                'mt-1.5 grid h-[52px] w-[52px] place-items-center rounded-[18px] bg-accent text-void transition active:scale-95',
+                isActive && 'ring-4 ring-accent/25',
+              )}
+            >
+              <Plus size={28} strokeWidth={2.6} />
+            </span>
+          )}
+        </NavLink>
+        {side('/reglas', 'Reglas', BookOpen)}
+        {side('/plan', 'Plan', SlidersHorizontal)}
+      </div>
+    </nav>
+  );
+}
+
 function Shell() {
   const profile = useJournal((s) => s.profile);
   const hasPlan = !!profile && profile.r_value > 0;
-  const nav = [
-    { to: '/', label: 'Nuevo', Icon: ClipboardCheck },
-    { to: '/trades', label: 'Trades', Icon: List },
-    { to: '/progreso', label: 'Progreso', Icon: BarChart3 },
-    { to: '/reglas', label: 'Reglas', Icon: BookOpen },
-    { to: '/plan', label: 'Plan', Icon: SlidersHorizontal },
-  ];
   return (
     <MotionConfig reducedMotion={profile?.reduce_motion ? 'always' : 'user'} transition={{ duration: 0.2 }}>
-      <header className="sticky top-0 z-30 border-b border-cyan-neon/10 bg-void/90 px-4 pb-2 pt-[max(env(safe-area-inset-top),8px)] backdrop-blur-md">
+      <header className="sticky top-0 z-30 bg-void/85 px-5 pb-3 pt-[max(env(safe-area-inset-top),12px)] backdrop-blur-xl">
         <div className="mx-auto max-w-xl">
-          <div className="mb-1 flex items-center justify-between">
-            <span className="font-display text-[11px] font-bold tracking-[0.3em] text-cyan-neon">VELEZ·HUD</span>
+          <div className="mb-2 flex min-h-[28px] items-center justify-between">
+            <span className="text-[15px] font-extrabold tracking-[-0.02em] text-ink">
+              Velez<span className="text-accent">.</span>
+            </span>
             <SyncBadge />
           </div>
           <ETClock />
         </div>
       </header>
-      <main className="mx-auto max-w-xl px-4 pt-3">
+      <main className="mx-auto max-w-xl px-5 pt-4">
         <Routes>
           <Route path="/" element={hasPlan ? <Checklist /> : <Navigate to="/plan" replace />} />
           <Route path="/trades" element={<Trades />} />
@@ -74,27 +112,7 @@ function Shell() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-cyan-neon/15 bg-void/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
-        <div className="mx-auto grid h-16 max-w-xl grid-cols-5">
-          {nav.map(({ to, label, Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) =>
-                cx('flex flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition', isActive ? 'text-cyan-neon' : 'text-ink-dim')
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <Icon size={21} style={isActive ? { filter: 'drop-shadow(0 0 6px #00E5FF)' } : undefined} />
-                  {label}
-                </>
-              )}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
+      <BottomNav />
       <RuleSheet />
     </MotionConfig>
   );

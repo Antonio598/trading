@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { RadialScore } from '../components/hud/gauges';
 import { Panel, Stat, cx, fmtR, price, usd } from '../components/hud/primitives';
+import { unitLabel } from '../domain/risk';
 import { SETUP_BY_ID } from '../domain/setups';
 import { etDayKey } from '../domain/time';
 import { dt, type TradeRecord } from '../domain/types';
@@ -13,9 +14,9 @@ import { dayStats, tradeTotals, useJournal } from '../state/journal';
 function DirBadge({ t }: { t: TradeRecord }) {
   const long = t.direction === 'long';
   return (
-    <span className={cx('inline-flex items-center gap-0.5 text-xs font-bold uppercase', long ? 'text-bull' : 'text-bear')}>
+    <span className={cx('inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[12px] font-bold', long ? 'bg-bull/[0.12] text-bull' : 'bg-bear/[0.12] text-bear')}>
       {long ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-      {long ? 'Largo' : 'Corto'}
+      {t.instrument === 'option' ? (long ? 'Call' : 'Put') : long ? 'Largo' : 'Corto'}
     </span>
   );
 }
@@ -37,7 +38,8 @@ export function Trades() {
   const lossLeft = profile ? profile.max_daily_loss + day.pnlToday : 0;
 
   return (
-    <div className="space-y-3 pb-24">
+    <div className="space-y-4 pb-28">
+      <h1 className="text-[30px] font-extrabold leading-tight tracking-[-0.03em] text-ink">Trades</h1>
       <Panel title="Hoy">
         <div className="grid grid-cols-3 gap-3">
           <Stat
@@ -65,7 +67,7 @@ export function Trades() {
       </Panel>
 
       <div className="flex items-center justify-between">
-        <h2 className="hud-label text-cyan-neon">Abiertos · {open.length}</h2>
+        <h2 className="text-[18px] font-extrabold tracking-[-0.02em] text-ink">Abiertos · {open.length}</h2>
         <Link to="/" className="btn-ghost !min-h-[40px] !px-3 !text-xs">
           <Plus size={14} /> Nuevo
         </Link>
@@ -79,12 +81,12 @@ export function Trades() {
               <RadialScore score={t.quality_score} critical={t.critical_flags.length > 0} size={50} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-display text-lg font-bold">{t.symbol}</span>
+                  <span className="tracking-[-0.02em] text-lg font-bold">{t.symbol}</span>
                   <DirBadge t={t} />
                   <span className="text-xs text-ink-dim">{dt(SETUP_BY_ID[t.setup].short, t.direction)} · {t.timeframe}m</span>
                 </div>
                 <div className="font-num mt-0.5 text-xs text-ink-dim">
-                  {t.shares - closedShares}/{t.shares} acc · E {price(t.entry)} · S {price(t.stop)} · {fmtTime(t.opened_at)} ET
+                  {t.shares - closedShares}/{t.shares} {unitLabel(t.instrument, t.shares, true)}{t.instrument === 'option' ? (t.direction === 'long' ? ' call' : ' put') : ''} · E {price(t.entry)} · S {price(t.stop)} · {fmtTime(t.opened_at)} ET
                 </div>
                 {t.critical_flags.length > 0 && (
                   <div className="mt-0.5 flex items-center gap-1 text-xs text-bear">
@@ -101,7 +103,7 @@ export function Trades() {
       })}
 
       <div className="flex items-center justify-between pt-2">
-        <h2 className="hud-label text-cyan-neon">Cerrados · {closed.length}</h2>
+        <h2 className="text-[18px] font-extrabold tracking-[-0.02em] text-ink">Cerrados · {closed.length}</h2>
         {trades.length > 0 && (
           <button
             className="btn-ghost !min-h-[40px] !px-3 !text-xs"
@@ -120,8 +122,8 @@ export function Trades() {
             <Link
               to={`/trades/${t.id}`}
               key={t.id}
-              className="flex items-center gap-3 border-l-2 bg-white/[0.025] px-3 py-2.5"
-              style={{ borderColor: r > 0 ? '#00FF9C' : r < 0 ? '#FF2E63' : '#8A94A6' }}
+              className="flex items-center gap-3 rounded-ctl border-l-4 bg-void-2 px-4 py-3.5"
+              style={{ borderColor: r > 0 ? '#3DDC97' : r < 0 ? '#FF6B7D' : '#2A2D37' }}
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">

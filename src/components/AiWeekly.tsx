@@ -11,7 +11,7 @@ import { Notice, Panel, hasRule, openRule } from './hud/primitives';
 function RuleLink({ id }: { id: string }) {
   if (!hasRule(id)) return null;
   return (
-    <button onClick={() => openRule(id)} className="mt-1 inline-flex min-h-[32px] items-center gap-1 text-xs font-semibold text-cyan-neon">
+    <button onClick={() => openRule(id)} className="mt-1 inline-flex min-h-[32px] items-center gap-1 text-xs font-semibold text-accent">
       <BookOpen size={13} /> Repasar: {RULES[id].title}
     </button>
   );
@@ -59,11 +59,11 @@ export function AiWeekly({ trades, online }: { trades: TradeRecord[]; online: bo
         <div className="space-y-4">
           <p className="text-[15px] leading-relaxed text-ink">{r.resumen}</p>
 
-          <div className="border border-cyan-neon/40 bg-cyan-neon/[0.06] p-3">
-            <div className="hud-label flex items-center gap-1.5 text-cyan-neon">
+          <div className="border border-accent/40 bg-accent/[0.06] p-3">
+            <div className="hud-label flex items-center gap-1.5 text-accent">
               <Target size={14} aria-hidden /> Tu regla de la semana
             </div>
-            <div className="mt-1 font-display text-base font-bold text-ink">{r.regla_semana.titulo}</div>
+            <div className="mt-1 tracking-[-0.02em] text-base font-bold text-ink">{r.regla_semana.titulo}</div>
             <p className="mt-1 text-sm text-ink">{r.regla_semana.por_que}</p>
             <p className="mt-1 text-sm text-ink-dim">
               <b className="text-ink">Cómo:</b> {r.regla_semana.como_aplicarla}
@@ -77,7 +77,7 @@ export function AiWeekly({ trades, online }: { trades: TradeRecord[]; online: bo
             </div>
             <ol className="space-y-2.5">
               {r.errores.map((e, i) => (
-                <li key={i} className="border-l-2 border-bear/60 bg-white/[0.02] px-3 py-2">
+                <li key={i} className="rounded-ctl bg-void-3 p-3.5">
                   <div className="font-semibold text-ink">
                     {i + 1}. {e.titulo}
                   </div>
@@ -97,7 +97,7 @@ export function AiWeekly({ trades, online }: { trades: TradeRecord[]; online: bo
             </div>
             <ul className="space-y-2">
               {r.fortalezas.map((f, i) => (
-                <li key={i} className="border-l-2 border-bull/50 bg-white/[0.02] px-3 py-2">
+                <li key={i} className="rounded-ctl bg-void-3 p-3.5">
                   <div className="font-semibold text-ink">{f.titulo}</div>
                   <p className="mt-0.5 text-sm text-ink-dim">{f.detalle}</p>
                 </li>

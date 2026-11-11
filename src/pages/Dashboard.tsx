@@ -62,17 +62,17 @@ function Kpi({
 }) {
   const c = tone ? { bull: 'text-bull', bear: 'text-bear', warn: 'text-warn' }[tone] : 'text-ink';
   return (
-    <div className="hud-panel p-3">
-      <div className="hud-label flex items-center gap-1 !text-[10px]">
+    <div className="hud-panel p-4">
+      <div className="hud-label flex items-center gap-1 !text-[12px]">
         {icon}
         {label}
       </div>
-      <div className={cx('font-num mt-1 text-2xl font-bold leading-none', c)}>
+      <div className={cx('font-num mt-2 text-[26px] font-extrabold leading-none tracking-[-0.03em]', c)}>
         {prefix}
         <CountUp value={value} decimals={decimals} />
         {suffix}
       </div>
-      {sub && <div className="mt-1 text-[11px] text-ink-dim">{sub}</div>}
+      {sub && <div className="mt-1.5 text-[12px] text-ink-dim">{sub}</div>}
     </div>
   );
 }
@@ -82,16 +82,18 @@ const toneOf = (v: number) => (v > 0 ? 'bull' : v < 0 ? 'bear' : undefined);
 
 function InsightRow({ i }: { i: Insight }) {
   const Icon = i.tone === 'bear' ? OctagonX : i.tone === 'warn' ? AlertTriangle : i.tone === 'bull' ? Check : Info;
-  const color = { bear: 'text-bear border-bear/60', warn: 'text-warn border-warn/60', bull: 'text-bull border-bull/50', info: 'text-cyan-neon border-cyan-neon/40' }[i.tone];
+  const color = { bear: 'text-bear bg-bear/[0.12]', warn: 'text-warn bg-warn/[0.12]', bull: 'text-bull bg-bull/[0.12]', info: 'text-accent bg-accent/[0.14]' }[i.tone];
   return (
-    <li className={cx('border-l-2 bg-white/[0.02] px-3 py-2.5', color)}>
-      <div className="flex gap-2.5">
-        <Icon size={17} className="mt-0.5 shrink-0" aria-hidden />
+    <li className="rounded-ctl bg-void-3 p-3.5">
+      <div className="flex gap-3">
+        <span className={cx('grid h-8 w-8 shrink-0 place-items-center rounded-full', color)}>
+          <Icon size={16} aria-hidden />
+        </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm leading-snug text-ink">{i.text}</p>
+          <p className="pt-1 text-[14px] leading-snug text-ink">{i.text}</p>
           {hasRule(i.rule) && (
-            <button onClick={() => openRule(i.rule!)} className="mt-1.5 inline-flex min-h-[32px] items-center gap-1 text-xs font-semibold text-cyan-neon">
-              <BookOpen size={13} /> Repasar la regla: {RULES[i.rule!].title}
+            <button onClick={() => openRule(i.rule!)} className="mt-1.5 inline-flex min-h-[32px] items-start gap-1.5 text-left text-[13px] font-semibold text-accent">
+              <BookOpen size={14} className="mt-0.5 shrink-0" /> Repasar la regla: {RULES[i.rule!].title}
             </button>
           )}
         </div>
@@ -155,11 +157,11 @@ export function Dashboard() {
   const shownInsights = allInsights ? d.insights : d.insights.slice(0, 3);
 
   return (
-    <div className="space-y-3 pb-24">
-      <h1 className="font-display text-xl font-bold tracking-wider text-cyan-neon">MI PROGRESO</h1>
+    <div className="space-y-4 pb-28">
+      <h1 className="text-[30px] font-extrabold leading-tight tracking-[-0.03em] text-ink">Mi progreso</h1>
 
       <Chips ariaLabel="Periodo" cols={4} size="sm" options={PERIODS} value={f.period} onChange={(period) => update({ period })} />
-      <Fold title="Filtrar" hint={filtered ? 'Filtro activo' : 'Por setup o dirección'} badge={filtered ? <span className="h-2 w-2 rounded-full bg-cyan-neon" /> : undefined}>
+      <Fold title="Filtrar" hint={filtered ? 'Filtro activo' : 'Por setup o dirección'} badge={filtered ? <span className="h-2 w-2 rounded-full bg-accent" /> : undefined}>
         <div className="space-y-2">
           <select
             aria-label="Setup"
@@ -189,16 +191,17 @@ export function Dashboard() {
         </div>
       </Fold>
 
-      <AiWeekly trades={all} online={online} />
-
       {k.closed === 0 ? (
-        <Panel>
-          <p className="text-sm text-ink-dim">
-            {trades.length === 0
-              ? 'Todavía no hay trades en este periodo. Cuando cierres tus trades, aquí verás cómo vas y qué mejorar.'
-              : `Tienes ${trades.length} trade(s) abierto(s). Ciérralos para ver tus resultados.`}
-          </p>
-        </Panel>
+        <>
+          <Panel>
+            <p className="text-[15px] text-ink-dim">
+              {trades.length === 0
+                ? 'Todavía no hay trades en este periodo. Cuando cierres tus trades, aquí verás cómo vas y qué mejorar.'
+                : `Tienes ${trades.length} trade(s) abierto(s). Ciérralos para ver tus resultados.`}
+            </p>
+          </Panel>
+          <AiWeekly trades={all} online={online} />
+        </>
       ) : (
         <>
           {/* Resumen simple */}
@@ -206,7 +209,7 @@ export function Dashboard() {
             <div className="flex items-end justify-between gap-3">
               <div>
                 <div className="hud-label">{periodText}</div>
-                <div className={cx('font-display mt-1 text-5xl font-black leading-none', k.netR >= 0 ? 'text-bull' : 'text-bear')} style={{ textShadow: '0 0 18px currentColor' }}>
+                <div className={cx('tracking-[-0.02em] mt-1 text-[52px] font-extrabold leading-none tracking-[-0.045em]', k.netR >= 0 ? 'text-bull' : 'text-bear')}>
                   {signed(k.netR)}
                   <CountUp value={Math.abs(k.netR)} decimals={2} />R
                 </div>
@@ -215,7 +218,7 @@ export function Dashboard() {
               {k.netR >= 0 ? <TrendingUp size={40} className="text-bull" aria-hidden /> : <TrendingDown size={40} className="text-bear" aria-hidden />}
             </div>
             <p className="mt-3 text-sm text-ink-dim">
-              {k.netR >= 0 ? 'Vas ganando' : 'Vas perdiendo'} {Math.abs(k.netR).toFixed(1)} veces tu riesgo por trade (R). Ganaste {wins} de {k.closed} trade
+              {k.netR >= 0 ? 'Llevas ganado' : 'Llevas perdido'} {Math.abs(k.netR).toFixed(1)} veces lo que arriesgas en un trade. Ganaste {wins} de {k.closed} trade
               {k.closed === 1 ? '' : 's'}.
             </p>
           </div>
@@ -241,12 +244,14 @@ export function Dashboard() {
                 ))}
               </ul>
               {d.insights.length > 3 && (
-                <button className="mt-2 min-h-[40px] text-sm font-semibold text-cyan-neon" onClick={() => setAllInsights(!allInsights)}>
+                <button className="mt-2 min-h-[40px] text-sm font-semibold text-accent" onClick={() => setAllInsights(!allInsights)}>
                   {allInsights ? 'Ver menos' : `Ver los ${d.insights.length}`}
                 </button>
               )}
             </Panel>
           )}
+
+          <AiWeekly trades={all} online={online} />
 
           <Panel title="Tu avance" hint="Cómo crece (o baja) tu resultado trade tras trade.">
             <EquityChart data={d.equity} />

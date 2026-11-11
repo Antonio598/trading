@@ -172,5 +172,10 @@ export async function fetchRemote(uid: string): Promise<Cache> {
 /** Fila plana para upsert (sin relaciones anidadas). */
 export function tradeRow(t: TradeRecord): Record<string, unknown> {
   const { exits: _e, review: _r, ...row } = t;
+  // Acciones: no se envían las columnas de opciones, así funciona aunque la base aún no tenga la migración 0003.
+  if (!row.instrument || row.instrument === 'stock') {
+    delete row.instrument;
+    delete row.multiplier;
+  }
   return row as unknown as Record<string, unknown>;
 }

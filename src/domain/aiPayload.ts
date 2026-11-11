@@ -36,6 +36,7 @@ export interface WeeklyStats {
   trades: {
     setup: string;
     direccion: 'compra' | 'venta';
+    instrumento: 'accion' | 'call' | 'put';
     tendencia: string;
     estado: string;
     hora_et: string;
@@ -97,6 +98,7 @@ export function buildWeeklyStats(trades: TradeRecord[], semana: string): WeeklyS
     trades: closed.slice(-MAX_TRADES_SENT).map(({ t, r }) => ({
       setup: dt(SETUP_BY_ID[t.setup]?.short ?? t.setup, t.direction),
       direccion: t.direction === 'long' ? 'compra' : 'venta',
+      instrumento: t.instrument === 'option' ? (t.direction === 'long' ? 'call' : 'put') : 'accion',
       tendencia: t.trend_type,
       estado: t.ma_state,
       hora_et: fmtMinutes(minutesInET(new Date(t.opened_at))),

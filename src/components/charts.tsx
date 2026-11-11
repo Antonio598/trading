@@ -20,24 +20,24 @@ import type { Bucket, EquityPoint, ScorePoint } from '../domain/stats';
 import { fmtR } from './hud/primitives';
 
 export const C = {
-  cyan: '#00E5FF',
-  bull: '#00FF9C',
-  bear: '#FF2E63',
-  warn: '#FFB800',
+  cyan: '#8B7CFF',
+  bull: '#3DDC97',
+  bear: '#FF6B7D',
+  warn: '#F5B84A',
   dim: '#8A94A6',
   grid: 'rgba(138,148,166,0.12)',
-  surface: '#0B1020',
+  surface: '#17181E',
 };
 const signColor = (v: number) => (v >= 0 ? C.bull : C.bear);
-const tick = { fill: C.dim, fontSize: 11, fontFamily: 'JetBrains Mono, monospace' };
-const rTick = (v: number) => `${v > 0 ? '+' : ''}${v}R`;
+const tick = { fill: C.dim, fontSize: 11, fontWeight: 600, fontFamily: 'Manrope, system-ui, sans-serif' };
+const rTick = (v: number) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Number(Math.abs(v).toFixed(1))}R`;
 
 /* ─────────── Tooltip en panel de vidrio ─────────── */
 function Glass({ children }: { children: ReactNode }) {
   return (
     <div
-      className="border border-cyan-neon/40 px-3 py-2 text-xs shadow-glow"
-      style={{ background: 'rgba(11,16,32,0.92)', backdropFilter: 'blur(10px)' }}
+      className="rounded-xl px-3 py-2 text-xs shadow-lift"
+      style={{ background: 'rgba(31,33,40,0.96)', backdropFilter: 'blur(10px)' }}
     >
       {children}
     </div>
@@ -93,7 +93,7 @@ const HBar = SignedBar(true);
 export function DataTable({ head, rows }: { head: string[]; rows: (string | number)[][] }) {
   return (
     <details className="mt-2 text-xs">
-      <summary className="cursor-pointer select-none text-ink-dim hover:text-cyan-neon">Ver tabla</summary>
+      <summary className="cursor-pointer select-none text-ink-dim hover:text-accent">Ver tabla</summary>
       <table className="font-num mt-2 w-full">
         <thead>
           <tr className="text-left text-ink-dim">
@@ -106,7 +106,7 @@ export function DataTable({ head, rows }: { head: string[]; rows: (string | numb
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-t border-white/5">
+            <tr key={i} className="border-t border-line">
               {r.map((c, j) => (
                 <td key={j} className="py-1 pr-2">
                   {c}
@@ -128,7 +128,7 @@ export function EquityChart({ data }: { data: EquityPoint[] }) {
   return (
     <div className="h-52" role="img" aria-label={`Curva de equity: ${data.length} trades, acumulado ${fmtR(last)}`}>
       <ResponsiveContainer>
-        <AreaChart data={[{ n: 0, label: 'Inicio', r: 0, cum: 0 }, ...data]} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+        <AreaChart data={[{ n: 0, label: 'Inicio', r: 0, cum: 0 }, ...data]} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="eqFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={0.28} />
@@ -137,7 +137,7 @@ export function EquityChart({ data }: { data: EquityPoint[] }) {
           </defs>
           <CartesianGrid stroke={C.grid} vertical={false} />
           <XAxis dataKey="n" tick={tick} axisLine={false} tickLine={false} />
-          <YAxis tick={tick} axisLine={false} tickLine={false} tickFormatter={rTick} width={48} />
+          <YAxis tick={tick} axisLine={false} tickLine={false} tickFormatter={rTick} width={44} />
           <ReferenceLine y={0} stroke={C.dim} strokeDasharray="3 3" />
           <Tooltip
             cursor={{ stroke: C.cyan, strokeOpacity: 0.4 }}
@@ -154,7 +154,7 @@ export function EquityChart({ data }: { data: EquityPoint[] }) {
             }
           />
           <Area
-            type="monotone"
+            type="linear"
             dataKey="cum"
             stroke={color}
             strokeWidth={2}
@@ -162,7 +162,6 @@ export function EquityChart({ data }: { data: EquityPoint[] }) {
             dot={false}
             activeDot={{ r: 5, fill: color, stroke: C.surface, strokeWidth: 2 }}
             isAnimationActive={!reduce}
-            style={{ filter: `drop-shadow(0 0 5px ${color})` }}
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -176,7 +175,7 @@ export function RBarChart({ data, markKeys, height = 200 }: { data: Bucket[]; ma
   return (
     <div style={{ height }} role="img" aria-label={data.map((d) => `${d.label} ${fmtR(d.netR)}`).join(', ')}>
       <ResponsiveContainer>
-        <BarChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }} barCategoryGap="22%">
+        <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barCategoryGap="22%">
           <CartesianGrid stroke={C.grid} vertical={false} />
           <XAxis
             dataKey="key"
@@ -194,7 +193,7 @@ export function RBarChart({ data, markKeys, height = 200 }: { data: Bucket[]; ma
               );
             }}
           />
-          <YAxis tick={tick} axisLine={false} tickLine={false} tickFormatter={rTick} width={48} />
+          <YAxis tick={tick} axisLine={false} tickLine={false} tickFormatter={rTick} width={44} />
           <ReferenceLine y={0} stroke={C.dim} />
           <Tooltip cursor={{ fill: 'rgba(0,229,255,0.06)' }} content={<BucketTip />} />
           <Bar dataKey="netR" shape={VBar} isAnimationActive={!reduce} maxBarSize={44} />
@@ -205,6 +204,17 @@ export function RBarChart({ data, markKeys, height = 200 }: { data: Bucket[]; ma
 }
 
 /* ─────────── Barras horizontales ranqueadas (setup, emoción) ─────────── */
+function RankLabel(props: unknown) {
+  const { x = 0, y = 0, width = 0, height = 0, value = 0 } = props as { x: number; y: number; width: number; height: number; value: number };
+  // En barras negativas recharts entrega x en el cero: la etiqueta va a la derecha del cero, no sobre el nombre.
+  const tx = value >= 0 ? x + width + 6 : x + 6;
+  return (
+    <text x={tx} y={y + height / 2} dy={4} fontSize={11} fontWeight={700} fontFamily="Manrope, system-ui, sans-serif" fill={value >= 0 ? C.bull : C.bear}>
+      {fmtR(value)}
+    </text>
+  );
+}
+
 export function RRankChart({ data }: { data: Bucket[] }) {
   const reduce = !!useReducedMotion();
   const height = Math.max(120, data.length * 36 + 30);
@@ -222,7 +232,7 @@ export function RRankChart({ data }: { data: Bucket[] }) {
             shape={HBar}
             isAnimationActive={!reduce}
             maxBarSize={22}
-            label={{ position: 'right', formatter: (v: number) => fmtR(v), ...tick, fill: 'rgba(255,255,255,0.85)' }}
+            label={RankLabel}
           />
         </BarChart>
       </ResponsiveContainer>
@@ -236,10 +246,10 @@ export function ScoreScatter({ data }: { data: ScorePoint[] }) {
   return (
     <div className="h-56" role="img" aria-label={`Score contra resultado en R, ${data.length} trades`}>
       <ResponsiveContainer>
-        <ScatterChart margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+        <ScatterChart margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid stroke={C.grid} />
           <XAxis type="number" dataKey="score" domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tick={tick} axisLine={false} tickLine={false} name="Score" />
-          <YAxis type="number" dataKey="r" tick={tick} axisLine={false} tickLine={false} tickFormatter={rTick} width={48} name="R" />
+          <YAxis type="number" dataKey="r" tick={tick} axisLine={false} tickLine={false} tickFormatter={rTick} width={44} name="R" />
           <ZAxis range={[64, 64]} />
           <ReferenceLine y={0} stroke={C.dim} />
           <ReferenceLine x={60} stroke={C.warn} strokeDasharray="3 3" strokeOpacity={0.6} label={{ value: '60', position: 'insideTopLeft', ...tick, fill: C.warn }} />

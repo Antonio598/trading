@@ -105,7 +105,7 @@ export const useJournal = create<JournalState>((set, get) => ({
     const uid = get().uid!;
     const trade = get().trades.find((t) => t.id === tradeId);
     if (!trade) return;
-    const pnl = exitPnl(Number(trade.entry), price, shares, trade.direction);
+    const pnl = exitPnl(Number(trade.entry), price, shares, trade.direction, trade.instrument);
     const id = crypto.randomUUID();
     const exit = {
       id,

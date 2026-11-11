@@ -1,6 +1,6 @@
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { useEffect } from 'react';
-import { calcTargets, rewardRatio } from '../../domain/risk';
+import { calcTargets, rewardRatio, unitLabel } from '../../domain/risk';
 import {
   CRITICAL_TEXT,
   LOCATION_OPTIONS,
@@ -41,7 +41,7 @@ export function StepContexto({ c, patch, profile }: StepProps) {
           <label className="block">
             <span className="hud-label mb-1.5 block">Acción</span>
             <input
-              className="hud-input uppercase"
+              className="hud-input uppercase tracking-[0.02em]"
               placeholder="AAPL"
               autoCapitalize="characters"
               autoCorrect="off"
@@ -62,17 +62,42 @@ export function StepContexto({ c, patch, profile }: StepProps) {
         </div>
         <div className="mt-3">
           <Chips
+            ariaLabel="Instrumento"
+            cols={2}
+            size="sm"
+            options={[
+              { id: 'stock', label: 'Acciones' },
+              { id: 'option', label: 'Opciones' },
+            ]}
+            value={c.instrument ?? 'stock'}
+            onChange={(i) => patch({ instrument: i, entry: null, stop: null })}
+          />
+        </div>
+        <div className="mt-2">
+          <Chips
             ariaLabel="Dirección"
             cols={2}
             size="lg"
-            options={[
-              { id: 'long', label: <><ArrowUpRight size={18} /> Compra</>, sub: 'Largo · creo que sube', tone: 'bull' },
-              { id: 'short', label: <><ArrowDownRight size={18} /> Venta</>, sub: 'Corto · creo que baja', tone: 'bear' },
-            ]}
+            options={
+              c.instrument === 'option'
+                ? [
+                    { id: 'long', label: <><ArrowUpRight size={18} /> Call</>, sub: 'Compro call · creo que sube', tone: 'bull' },
+                    { id: 'short', label: <><ArrowDownRight size={18} /> Put</>, sub: 'Compro put · creo que baja', tone: 'bear' },
+                  ]
+                : [
+                    { id: 'long', label: <><ArrowUpRight size={18} /> Compra</>, sub: 'Largo · creo que sube', tone: 'bull' },
+                    { id: 'short', label: <><ArrowDownRight size={18} /> Venta</>, sub: 'Corto · creo que baja', tone: 'bear' },
+                  ]
+            }
             value={c.direction}
             onChange={(d) => patch({ direction: d })}
           />
         </div>
+        {c.instrument === 'option' && (
+          <p className="mt-2 text-xs text-ink-dim">
+            Lee el gráfico de la acción como siempre. En el paso de entrada escribirás la <b className="text-ink">prima</b> de la opción.
+          </p>
+        )}
       </Panel>
 
       <Panel title="Tu gráfico" hint="Revisa que tengas todo a la vista antes de decidir.">
@@ -159,7 +184,7 @@ export function StepContexto({ c, patch, profile }: StepProps) {
 }
 
 function ExtraBadge({ n }: { n: number }) {
-  return n > 0 ? <span className="font-num bg-cyan-neon/15 px-1.5 text-xs font-bold text-cyan-neon">{n}</span> : null;
+  return n > 0 ? <span className="font-num bg-accent/15 px-1.5 text-xs font-bold text-accent">{n}</span> : null;
 }
 
 /* ─────────── Paso 2: setup ─────────── */
@@ -181,15 +206,14 @@ export function StepSetup({ c, patch }: StepProps) {
                 disabled={blocked}
                 onClick={() => patch({ setup: s.id })}
                 className={cx(
-                  'min-h-[56px] border px-2.5 py-2 text-left transition disabled:opacity-25',
-                  on ? 'border-cyan-neon bg-cyan-neon/10 shadow-glow' : 'border-ink-dim/25 bg-white/[0.02]',
+                  'min-h-[64px] rounded-ctl px-3.5 py-2.5 text-left transition disabled:opacity-25',
+                  on ? 'bg-accent text-void' : 'bg-void-3 hover:bg-[#252731]',
                 )}
-                style={{ clipPath: 'polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)' }}
               >
-                <span className={cx('block font-display text-sm font-bold', on ? 'text-cyan-neon' : 'text-ink')}>
+                <span className={cx('block text-[16px] font-extrabold tracking-[-0.01em]', on ? 'text-void' : 'text-ink')}>
                   {dt(s.short, c.direction)}
                 </span>
-                <span className="block text-[11px] leading-tight text-ink-dim">{dt(s.label, c.direction).replace(/^.*· /, '')}</span>
+                <span className={cx('mt-0.5 block text-[12px] font-medium leading-tight', on ? 'text-void/70' : 'text-ink-dim')}>{dt(s.label, c.direction).replace(/^.*· /, '')}</span>
               </button>
             );
           })}
@@ -266,7 +290,7 @@ export function StepComplementos({ c, patch, result }: StepProps) {
         title="¿Dónde está el precio?"
         hint="Marca todas las zonas importantes en las que esté. Cada una suma puntos."
         help="ubicacion"
-        right={c.locations.length > 0 ? <span className="font-num text-xs text-cyan-neon">{c.locations.length} ✓</span> : undefined}
+        right={c.locations.length > 0 ? <span className="font-num text-xs text-accent">{c.locations.length} ✓</span> : undefined}
       >
         <Chips
           multi
@@ -320,44 +344,57 @@ export function StepEjecucion({ c, patch, result, profile }: StepProps) {
   const targets = calcTargets(c.pivot, c.retraceExtreme);
   const tif = TIF_RULE[c.timeframe];
   const long = isLong(c);
+  const option = c.instrument === 'option';
+  const unit = (n: number) => unitLabel(c.instrument, n);
 
   return (
     <div className="space-y-3">
       <Panel
-        title="¿Cuántas acciones?"
-        hint="Escribe dónde entras y dónde pones tu stop (dónde sales si sale mal). La app calcula el resto."
+        title={option ? '¿Cuántos contratos?' : '¿Cuántas acciones?'}
+        hint={
+          option
+            ? 'Escribe la prima a la que compras la opción y la prima a la que la venderías si sale mal. La app calcula el resto.'
+            : 'Escribe dónde entras y dónde pones tu stop (dónde sales si sale mal). La app calcula el resto.'
+        }
         help="r"
       >
         <div className="grid grid-cols-2 gap-2">
-          <NumField label="Precio de entrada" prefix="$" value={c.entry} onChange={(v) => patch({ entry: v })} placeholder="0.00" />
-          <NumField label="Stop" prefix="$" value={c.stop} onChange={(v) => patch({ stop: v })} placeholder="0.00" />
+          <NumField label={option ? 'Prima de entrada' : 'Precio de entrada'} prefix="$" value={c.entry} onChange={(v) => patch({ entry: v })} placeholder="0.00" />
+          <NumField label={option ? 'Prima si toca tu stop' : 'Stop'} prefix="$" value={c.stop} onChange={(v) => patch({ stop: v })} placeholder="0.00" />
         </div>
+        {option && (
+          <button type="button" className="mt-2 min-h-[36px] text-xs font-semibold text-accent" onClick={() => patch({ stop: 0 })}>
+            Arriesgo toda la prima (stop = $0)
+          </button>
+        )}
 
         {risk.valid && risk.fitsR && (
-          <div className="mt-3 border border-cyan-neon/30 bg-cyan-neon/[0.05] px-3 py-3 text-center">
-            <div className="text-sm text-ink-dim">{long ? 'Compra' : 'Vende en corto'}</div>
-            <div className="font-display text-4xl font-black text-cyan-neon" style={{ textShadow: '0 0 14px rgba(0,229,255,.5)' }}>
+          <div className="mt-4 rounded-ctl bg-accent/[0.10] px-4 py-5 text-center">
+            <div className="text-sm text-ink-dim">{option ? `Compra ${long ? 'call' : 'put'}` : long ? 'Compra' : 'Vende en corto'}</div>
+            <div className="font-num text-[56px] font-extrabold leading-none tracking-[-0.04em] text-ink">
               {risk.shares.toLocaleString('en-US')}
             </div>
-            <div className="text-sm text-ink-dim">acciones</div>
+            <div className="text-sm text-ink-dim">{unit(risk.shares)}</div>
             <div className="mt-2 text-sm text-ink">
               Si toca tu stop pierdes <b className="font-num text-bear">{usd(risk.riskUsd)}</b> (tu R es {usd(profile.r_value, 0)})
             </div>
             <div className="font-num mt-1 text-xs text-ink-dim">
-              Necesitas {usd(risk.capital, 0)} · arriesgas ${risk.riskPerShare.toFixed(2)} por acción
+              {option ? 'Te cuesta' : 'Necesitas'} {usd(risk.capital, 0)} · arriesgas {usd(risk.riskPerShare)} por {unit(1)}
             </div>
           </div>
         )}
         {c.entry != null && c.stop != null && !risk.stopSideOk && (
           <div className="mt-2">
-            <Notice tone="bear">{dt(CRITICAL_TEXT.stop_invalido, c.direction)}</Notice>
+            <Notice tone="bear">
+              {option ? 'La prima del stop debe ser menor que la prima de entrada.' : dt(CRITICAL_TEXT.stop_invalido, c.direction)}
+            </Notice>
           </div>
         )}
         <div className="mt-2 space-y-2">
           {risk.valid && !risk.fitsR && (
             <Notice tone="bear" title="Este trade no cabe en tu R. No se opera.">
-              Con solo 100 acciones ya perderías {usd(100 * risk.riskPerShare)} y tu límite es {usd(profile.r_value, 0)}. Busca un stop más cercano o
-              deja pasar este trade.
+              Con solo 1 {unit(1)} ya perderías {usd(risk.riskPerShare)} y tu límite es {usd(profile.r_value, 0)}. Busca un stop más cercano
+              {option ? ', una opción más barata' : ''} o deja pasar este trade.
             </Notice>
           )}
           {risk.exceedsAccount && <Notice tone="warn">Necesitas más dinero del que tiene tu cuenta ({usd(profile.account_size, 0)}).</Notice>}
@@ -406,7 +443,7 @@ export function StepEjecucion({ c, patch, result, profile }: StepProps) {
               <div className="mt-2">
                 <Notice tone="warn">
                   Mal lugar para el stop. Mejor usa tu pérdida máxima por trade ({usd(profile.mlpt, 0)}).{' '}
-                  <button className="font-bold text-cyan-neon underline" onClick={() => patch({ stopType: 'mlpt', stopAt200: false })}>
+                  <button className="font-bold text-accent underline" onClick={() => patch({ stopType: 'mlpt', stopAt200: false })}>
                     Cambiar
                   </button>
                 </Notice>
@@ -425,15 +462,16 @@ export function StepEjecucion({ c, patch, result, profile }: StepProps) {
           {long
             ? 'Escribe el máximo de antes de la caída y el punto más bajo de la caída.'
             : 'Escribe el mínimo de antes de la subida y el punto más alto de la subida.'}
+          {option && ' Son precios de la acción (no de la prima): úsalos como niveles para vender tu opción.'}
         </p>
         <div className="grid grid-cols-2 gap-2">
           <NumField label={long ? 'Máximo anterior' : 'Mínimo anterior'} prefix="$" value={c.pivot} onChange={(v) => patch({ pivot: v })} />
           <NumField label={long ? 'Punto más bajo' : 'Punto más alto'} prefix="$" value={c.retraceExtreme} onChange={(v) => patch({ retraceExtreme: v })} />
         </div>
         {targets && (
-          <div className="mt-3 grid grid-cols-3 gap-2 border-t border-white/5 pt-3">
+          <div className="mt-3 grid grid-cols-3 gap-2 border-t border-line pt-3">
             {(['t1', 't2', 't3'] as const).map((k) => {
-              const rb = c.entry != null && risk.valid ? rewardRatio(c.entry, targets[k], risk.riskPerShare, c.direction) : null;
+              const rb = !option && c.entry != null && risk.valid ? rewardRatio(c.entry, targets[k], risk.riskPerShare, c.direction) : null;
               return (
                 <div key={k}>
                   <div className="hud-label">{k.toUpperCase()}</div>
@@ -460,7 +498,7 @@ export function StepManejo({ c, patch }: StepProps) {
         <Chips ariaLabel="Método de trailing" cols={2} options={TRAILING_OPTIONS} value={c.trailing} onChange={(t) => patch({ trailing: t })} />
         {c.trailing === 'vela' && (
           <p className="mt-2 text-sm text-ink-dim">
-            Empiezas a mover el stop después de <b className="text-cyan-neon">{setup?.fastTrail ? '1 vela' : '2 velas'}</b> a favor.
+            Empiezas a mover el stop después de <b className="text-accent">{setup?.fastTrail ? '1 vela' : '2 velas'}</b> a favor.
           </p>
         )}
         <div className="mt-3">

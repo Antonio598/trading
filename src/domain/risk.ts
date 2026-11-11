@@ -1,16 +1,25 @@
-import type { Direction, ExitRow, Profile } from './types';
+import type { Direction, ExitRow, Instrument, Profile } from './types';
 
-export const MIN_LOT = 100;
+/** Un contrato de opciones equivale a 100 acciones. */
+export const OPTION_MULTIPLIER = 100;
+
+export const multiplierOf = (instrument: Instrument | undefined) => (instrument === 'option' ? OPTION_MULTIPLIER : 1);
+
+/** Las calls y puts se COMPRAN: en opciones siempre ganas si sube la prima. */
+const pnlSide = (direction: Direction, instrument: Instrument | undefined): Direction =>
+  instrument === 'option' ? 'long' : direction;
 
 export interface RiskCalc {
   valid: boolean;
   /** Stop del lado correcto de la entrada. */
   stopSideOk: boolean;
+  /** Riesgo por unidad (por acción, o por contrato en opciones = diferencia de prima × 100). */
   riskPerShare: number;
+  /** Cantidad a operar: acciones o contratos. */
   shares: number;
   capital: number;
   riskUsd: number;
-  /** Con 100 acciones ya se supera la R. */
+  /** Cabe al menos 1 acción / 1 contrato dentro de la R. */
   fitsR: boolean;
   exceedsAccount: boolean;
 }
@@ -23,6 +32,7 @@ export function calcRisk(
   direction: Direction,
   r: number,
   accountSize: number,
+  instrument: Instrument = 'stock',
 ): RiskCalc {
   const empty: RiskCalc = {
     valid: false,
@@ -34,13 +44,17 @@ export function calcRisk(
     fitsR: true,
     exceedsAccount: false,
   };
-  if (entry == null || stop == null || !(entry > 0) || !(stop > 0)) return empty;
-  const stopSideOk = direction === 'long' ? stop < entry : stop > entry;
-  const riskPerShare = round(Math.abs(entry - stop), 4);
+  const option = instrument === 'option';
+  // En opciones se permite stop = 0 (arriesgar toda la prima).
+  if (entry == null || stop == null || !(entry > 0) || !(option ? stop >= 0 : stop > 0)) return empty;
+  const side = pnlSide(direction, instrument);
+  const stopSideOk = side === 'long' ? stop < entry : stop > entry;
+  const mult = multiplierOf(instrument);
+  const riskPerShare = round(Math.abs(entry - stop) * mult, 4);
   if (!stopSideOk || riskPerShare === 0 || !(r > 0)) return { ...empty, stopSideOk };
   // Pequeño epsilon para evitar errores de coma flotante (50 / 0.5 = 99.999…)
   const shares = Math.floor(r / riskPerShare + 1e-9);
-  const capital = round(shares * entry);
+  const capital = round(shares * entry * mult);
   return {
     valid: true,
     stopSideOk,
@@ -48,7 +62,7 @@ export function calcRisk(
     shares,
     capital,
     riskUsd: round(shares * riskPerShare),
-    fitsR: riskPerShare * MIN_LOT <= r + 1e-9,
+    fitsR: shares >= 1,
     exceedsAccount: accountSize > 0 && capital > accountSize,
   };
 }
@@ -81,9 +95,15 @@ export function rewardRatio(entry: number, target: number, riskPerShare: number,
   return round(reward / riskPerShare, 2);
 }
 
-export function exitPnl(entry: number, price: number, shares: number, dir: Direction): number {
-  const sign = dir === 'long' ? 1 : -1;
-  return round((price - entry) * shares * sign);
+export function exitPnl(entry: number, price: number, shares: number, dir: Direction, instrument: Instrument = 'stock'): number {
+  const sign = pnlSide(dir, instrument) === 'long' ? 1 : -1;
+  return round((price - entry) * shares * sign * multiplierOf(instrument));
+}
+
+/** Etiquetas de cantidad según el instrumento. */
+export function unitLabel(instrument: Instrument | undefined, n: number, short = false): string {
+  if (instrument === 'option') return short ? 'ctr' : n === 1 ? 'contrato' : 'contratos';
+  return short ? 'acc' : n === 1 ? 'acción' : 'acciones';
 }
 
 export function toR(pnl: number, r: number): number {

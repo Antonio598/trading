@@ -6,7 +6,7 @@ import { EMPTY_CHECKLIST, type ChecklistState, type Timeframe } from '../domain/
 /** Lo que se repite con "Plantilla rápida". */
 export type Template = Pick<
   ChecklistState,
-  'symbol' | 'direction' | 'timeframe' | 'setup' | 'trendType' | 'maState' | 'stopType' | 'trailing' | 'chartOk' | 'masVisible'
+  'symbol' | 'instrument' | 'direction' | 'timeframe' | 'setup' | 'trendType' | 'maState' | 'stopType' | 'trailing' | 'chartOk' | 'masVisible'
 >;
 
 interface ChecklistStore {
@@ -52,6 +52,7 @@ export const useChecklist = create<ChecklistStore>()(
         set({
           template: {
             symbol: c.symbol,
+            instrument: c.instrument,
             direction: c.direction,
             timeframe: c.timeframe,
             setup: c.setup,
@@ -71,6 +72,19 @@ export const useChecklist = create<ChecklistStore>()(
         set({ c: { ...EMPTY_CHECKLIST, ...t, reversalSignal: isSignal }, step: 0 });
       },
     }),
-    { name: 'vj-checklist', version: 1 },
+    {
+      name: 'vj-checklist',
+      version: 1,
+      // Borradores guardados con versiones anteriores: completa los campos nuevos con sus valores por defecto.
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<ChecklistStore>;
+        return {
+          ...current,
+          ...p,
+          c: { ...EMPTY_CHECKLIST, ...(p.c ?? {}) },
+          template: p.template ? { ...p.template, instrument: p.template.instrument ?? 'stock' } : null,
+        };
+      },
+    },
   ),
 );

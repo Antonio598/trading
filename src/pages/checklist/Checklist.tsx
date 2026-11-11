@@ -1,10 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, RotateCcw, Save, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, OctagonX, RotateCcw, Save, Zap } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RadialScore, ScanVerdict, scoreColor } from '../../components/hud/gauges';
 import { Fold, Notice, Panel, cx, helpDirection, usd, vibrate } from '../../components/hud/primitives';
-import { calcTargets } from '../../domain/risk';
+import { calcTargets, multiplierOf } from '../../domain/risk';
 import { evaluate } from '../../domain/score';
 import { SETUP_BY_ID } from '../../domain/setups';
 import { dt, type TradeRecord } from '../../domain/types';
@@ -12,7 +12,7 @@ import { useChecklist } from '../../state/checklist';
 import { dayStats, useJournal } from '../../state/journal';
 import { StepComplementos, StepContexto, StepEjecucion, StepManejo, StepSetup } from './Steps';
 
-const STEPS = ['Tendencia', 'Patrón', 'Confirmación', 'Entrada', 'Salida', 'Veredicto'];
+const STEPS = ['Tendencia', 'Patrón', 'Confirmación', 'Entrada', 'Salida', 'Resultado'];
 
 export function Checklist() {
   const { c, step, setStep, patch, reset, template, applyTemplate, saveTemplate } = useChecklist();
@@ -51,6 +51,8 @@ export function Checklist() {
       client_id: id,
       created_at: now,
       symbol: c.symbol.trim(),
+      instrument: c.instrument ?? 'stock',
+      multiplier: multiplierOf(c.instrument),
       direction: c.direction,
       timeframe: c.timeframe,
       setup: c.setup,
@@ -88,56 +90,44 @@ export function Checklist() {
   const setup = c.setup ? SETUP_BY_ID[c.setup] : null;
 
   return (
-    <div className="pb-28">
-      {/* Barra de progreso + score en vivo */}
-      <div className="sticky top-0 z-20 -mx-4 mb-3 border-b border-white/5 bg-void/85 px-4 py-2 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <RadialScore score={result.score} critical={hasCritical} size={52} />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between">
-              <span className="font-display text-sm font-bold tracking-wider" style={{ color }}>
-                {hasCritical ? 'REGLA ROTA' : result.verdict === 'aplus' ? 'A+' : result.verdict === 'aceptable' ? 'ACEPTABLE' : 'BAJO'}
-              </span>
-              <span className="truncate text-xs text-ink-dim">
-                {c.symbol || '—'} · {c.direction === 'long' ? 'Largo' : 'Corto'} · {setup ? dt(setup.short, c.direction) : 'sin setup'}
-              </span>
-            </div>
-            <div className="mt-1.5 flex gap-1" role="tablist" aria-label="Pasos">
-              {STEPS.map((s, i) => (
-                <button
-                  key={s}
-                  role="tab"
-                  aria-selected={i === step}
-                  aria-label={`Paso ${i + 1}: ${s}`}
-                  onClick={() => go(i)}
-                  className={cx('h-1.5 flex-1 transition', i === step ? 'bg-cyan-neon shadow-glow' : i < step ? 'bg-cyan-neon/40' : 'bg-white/10')}
-                />
-              ))}
-            </div>
-            <div className="mt-1 text-[11px] text-ink-dim">
-              Paso {step + 1}/{STEPS.length} · <span className="text-ink">{STEPS[step]}</span>
-            </div>
+    <div className="pb-40">
+      {/* Título y pasos */}
+      <div className="mb-5">
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold text-ink-dim">
+              Paso {step + 1} de {STEPS.length}
+              {c.symbol ? ` · ${c.symbol}` : ''}
+              {setup ? ` · ${dt(setup.short, c.direction)}` : ''}
+            </p>
+            <h1 className="mt-0.5 text-[30px] font-extrabold leading-tight tracking-[-0.03em] text-ink">{STEPS[step]}</h1>
           </div>
-        </div>
-        {hasCritical && step < 5 && (
-          <div className="mt-2 truncate text-xs text-bear" role="status">
-            ⛔ {result.critical[0].text}
-          </div>
-        )}
-      </div>
-
-      {step === 0 && (
-        <div className="mb-3 flex gap-2">
-          {template && (
-            <button className="btn-ghost flex-1" onClick={applyTemplate}>
-              <Zap size={16} /> Plantilla rápida
-            </button>
+          {step === 0 && (
+            <div className="flex shrink-0 gap-2">
+              {template && (
+                <button className="btn-ghost !min-h-[40px] !rounded-full !px-4 !text-[13px]" onClick={applyTemplate}>
+                  <Zap size={15} /> Repetir último
+                </button>
+              )}
+              <button className="btn-ghost !min-h-[40px] !w-10 !rounded-full !px-0" onClick={() => reset(c.timeframe)} aria-label="Empezar de cero">
+                <RotateCcw size={16} />
+              </button>
+            </div>
           )}
-          <button className="btn-ghost" onClick={() => reset(c.timeframe)} aria-label="Reiniciar checklist">
-            <RotateCcw size={16} />
-          </button>
         </div>
-      )}
+        <div className="mt-4 flex gap-1.5" role="tablist" aria-label="Pasos">
+          {STEPS.map((sName, i) => (
+            <button
+              key={sName}
+              role="tab"
+              aria-selected={i === step}
+              aria-label={`Paso ${i + 1}: ${sName}`}
+              onClick={() => go(i)}
+              className={cx('h-1.5 flex-1 rounded-full transition-colors', i === step ? 'bg-accent' : i < step ? 'bg-accent/45' : 'bg-void-3')}
+            />
+          ))}
+        </div>
+      </div>
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
@@ -155,7 +145,7 @@ export function Checklist() {
           {step === 5 && (
             <div className="space-y-3">
               <ScanVerdict verdict={result.verdict} />
-              <p className="px-1 text-center text-base text-ink">
+              <p className="px-1 text-[16px] leading-snug text-ink/90">
                 {result.verdict === 'aplus'
                   ? 'Cumple el método. Puedes entrar con tu plan.'
                   : result.verdict === 'aceptable'
@@ -183,8 +173,8 @@ export function Checklist() {
                             {s.earned}/{s.max}
                           </span>
                         </div>
-                        <div className="mt-0.5 h-1 bg-white/10">
-                          <div className="h-full bg-cyan-neon" style={{ width: `${(s.earned / s.max) * 100}%` }} />
+                        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-void-3">
+                          <div className="h-full rounded-full bg-accent" style={{ width: `${(s.earned / s.max) * 100}%` }} />
                         </div>
                       </div>
                     ))}
@@ -214,28 +204,28 @@ export function Checklist() {
 
               {result.risk.valid && (
                 <Panel title="Tu orden">
-                  <div className="font-num grid grid-cols-3 gap-2 text-center">
+                  <div className="font-num grid grid-cols-3 gap-2">
                     <div>
-                      <div className="hud-label">Acciones</div>
-                      <div className="text-xl font-bold text-cyan-neon">{result.risk.shares}</div>
+                      <div className="hud-label">{c.instrument === 'option' ? 'Contratos' : 'Acciones'}</div>
+                      <div className="mt-1 text-[22px] font-extrabold tracking-[-0.03em] text-ink">{result.risk.shares}</div>
                     </div>
                     <div>
-                      <div className="hud-label">Entrada</div>
-                      <div className="text-xl font-bold">${c.entry?.toFixed(2)}</div>
+                      <div className="hud-label">{c.instrument === 'option' ? 'Prima' : 'Entrada'}</div>
+                      <div className="mt-1 text-[22px] font-extrabold tracking-[-0.03em]">${c.entry?.toFixed(2)}</div>
                     </div>
                     <div>
                       <div className="hud-label">Stop</div>
-                      <div className="text-xl font-bold text-bear">${c.stop?.toFixed(2)}</div>
+                      <div className="mt-1 text-[22px] font-extrabold tracking-[-0.03em] text-bear">${c.stop?.toFixed(2)}</div>
                     </div>
                   </div>
-                  <div className="mt-2 text-center text-xs text-ink-dim">Riesgo {usd(result.risk.riskUsd)} · 1R = {usd(profile.r_value, 0)}</div>
+                  <div className="mt-3 text-[13px] text-ink-dim">Si toca tu stop pierdes {usd(result.risk.riskUsd)}. Tu R es {usd(profile.r_value, 0)}.</div>
                 </Panel>
               )}
 
               {!result.ready && <Notice tone="info" title="Te falta llenar">{result.missing.join(' · ')}</Notice>}
 
               <button
-                className={cx('btn-primary w-full', confirmBroken && '!bg-bear !text-white !shadow-glow-bear')}
+                className={cx('btn-primary w-full', confirmBroken && '!bg-bear')}
                 disabled={!result.ready || saving}
                 onClick={register}
               >
@@ -243,28 +233,47 @@ export function Checklist() {
                 {confirmBroken ? 'Sí, registrarlo de todas formas' : 'Registrar entrada'}
               </button>
               {confirmBroken && (
-                <p className="text-center text-xs text-bear">Se guardará marcado con las reglas que rompió, para que veas cuánto te cuesta.</p>
+                <p className="text-[13px] text-bear">Se guardará marcado con las reglas que rompió, para que veas cuánto te cuesta.</p>
               )}
             </div>
           )}
         </motion.div>
       </AnimatePresence>
 
-      {/* Navegación inferior del wizard */}
-      <div className="fixed inset-x-0 bottom-[64px] z-20 border-t border-white/5 bg-void/90 px-4 py-2 backdrop-blur-md">
-        <div className="mx-auto flex max-w-xl gap-2">
-          <button className="btn-ghost w-24" disabled={step === 0} onClick={() => go(step - 1)}>
-            <ChevronLeft size={18} /> Atrás
-          </button>
-          {step < STEPS.length - 1 ? (
-            <button className="btn-primary flex-1" onClick={() => go(step + 1)}>
-              {STEPS[step + 1]} <ChevronRight size={18} />
-            </button>
-          ) : (
-            <button className="btn-primary flex-1" disabled={!result.ready || saving} onClick={register}>
-              <Save size={18} /> {confirmBroken ? 'Confirmar' : 'Registrar'}
+      {/* Barra inferior: puntaje en vivo + navegación */}
+      <div className="fixed inset-x-0 bottom-[calc(68px+env(safe-area-inset-bottom))] z-20 border-t border-white/[0.05] bg-void-2/95 px-5 pb-3 pt-2.5 backdrop-blur-xl">
+        <div className="mx-auto max-w-xl">
+          {hasCritical && step < 5 && (
+            <button onClick={() => go(5)} className="mb-2 flex w-full items-center gap-2 truncate rounded-full bg-bear/[0.12] px-3 py-1.5 text-left text-[12px] font-semibold text-bear" role="status">
+              <OctagonX size={14} className="shrink-0" aria-hidden />
+              <span className="truncate">{result.critical[0].text}</span>
             </button>
           )}
+          <div className="flex items-center gap-2.5">
+            <RadialScore score={result.score} critical={hasCritical} size={48} />
+            <div className="mr-auto hidden min-w-0 sm:block">
+              <div className="text-[13px] font-bold" style={{ color }}>
+                {hasCritical ? 'Regla rota' : result.verdict === 'aplus' ? 'Trade A+' : result.verdict === 'aceptable' ? 'Aceptable' : 'Puntaje bajo'}
+              </div>
+              <div className="text-[12px] text-ink-dim">Puntaje en vivo</div>
+            </div>
+            <button className="btn-ghost !w-12 shrink-0 !px-0" disabled={step === 0} onClick={() => go(step - 1)} aria-label="Paso anterior">
+              <ChevronLeft size={20} />
+            </button>
+            {step < STEPS.length - 1 ? (
+              <button className="btn-primary min-w-0 flex-1 sm:flex-none sm:px-8" onClick={() => go(step + 1)}>
+                <span className="truncate">{STEPS[step + 1]}</span> <ChevronRight size={18} className="shrink-0" />
+              </button>
+            ) : (
+              <button
+                className={cx('btn-primary min-w-0 flex-1 sm:flex-none sm:px-8', confirmBroken && '!bg-bear')}
+                disabled={!result.ready || saving}
+                onClick={register}
+              >
+                <Save size={18} /> {confirmBroken ? 'Confirmar' : 'Registrar'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -27,7 +27,7 @@ describe('Dashboard (smoke)', () => {
     try { localStorage.removeItem('vj-dash-filters'); } catch { /* node */ }
     mock.state.trades = [t(0, 2), t(1, -1), t(2, -1.2), t(3, 1.5), t(4, 0.4), t(5, -0.3)];
     const html = renderToString(<Dashboard />);
-    for (const s of ['MI PROGRESO', 'Lo que debes saber', 'Tu avance', 'Tus errores más caros', 'No respeté el TIF', 'Ver estadísticas detalladas', 'Tu coach con IA']) {
+    for (const s of ['Mi progreso', 'Lo que debes saber', 'Tu avance', 'Tus errores más caros', 'No respeté el TIF', 'Ver estadísticas detalladas', 'Tu coach con IA']) {
       expect(html).toContain(s);
     }
   });

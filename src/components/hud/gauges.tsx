@@ -1,13 +1,13 @@
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion';
 import { CheckCircle2, OctagonX, TriangleAlert } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { Verdict } from '../../domain/types';
 import { cx } from './primitives';
 
 export function scoreColor(score: number, critical = false) {
-  if (critical || score < 60) return '#FF2E63';
-  if (score < 80) return '#FFB800';
-  return '#00FF9C';
+  if (critical || score < 60) return '#FF6B7D';
+  if (score < 80) return '#F5B84A';
+  return '#3DDC97';
 }
 
 /* ─────────── Número que cuenta ─────────── */
@@ -15,26 +15,30 @@ export function CountUp({ value, decimals = 0 }: { value: number; decimals?: num
   const mv = useMotionValue(value);
   const reduce = useReducedMotion();
   const text = useTransform(mv, (v) => v.toFixed(decimals));
-  const [, force] = useState(0);
   useEffect(() => {
     if (reduce) {
       mv.set(value);
-      force((n) => n + 1);
       return;
     }
-    const c = animate(mv, value, { duration: 0.45, ease: 'easeOut' });
+    const c = animate(mv, value, { duration: 0.5, ease: [0.22, 1, 0.36, 1] });
     return () => c.stop();
   }, [value, reduce, mv]);
   return <motion.span>{text}</motion.span>;
 }
 
-/* ─────────── Medidor radial ─────────── */
+/* ─────────── Medidor: arco abierto de 270° con el número al centro ─────────── */
+const SWEEP = 0.75; // fracción del círculo que ocupa el arco
+
 export function RadialScore({ score, critical, size = 132 }: { score: number; critical?: boolean; size?: number }) {
-  const stroke = size > 80 ? 9 : 5;
-  const r = (size - stroke) / 2 - 4;
+  const big = size > 80;
+  const stroke = big ? 8 : 4.5;
+  const r = (size - stroke) / 2 - 1;
   const c = 2 * Math.PI * r;
+  const arc = c * SWEEP;
   const color = scoreColor(score, critical);
-  const label = critical ? 'Regla crítica rota' : score >= 80 ? 'A+' : score >= 60 ? 'Aceptable' : 'Bajo';
+  const label = critical ? 'Regla rota' : score >= 80 ? 'Trade A+' : score >= 60 ? 'Aceptable' : 'Bajo';
+  // Rotación para que el hueco del arco quede abajo.
+  const rotate = 90 + ((1 - SWEEP) * 360) / 2;
   return (
     <div
       className="relative grid shrink-0 place-items-center"
@@ -43,24 +47,10 @@ export function RadialScore({ score, critical, size = 132 }: { score: number; cr
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={score}
-      aria-label={`Score de calidad ${score} de 100: ${label}`}
+      aria-label={`Puntaje ${score} de 100: ${label}`}
     >
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(138,148,166,.15)" strokeWidth={stroke} />
-        {/* marcas en 60 y 80 */}
-        {[60, 80].map((m) => (
-          <circle
-            key={m}
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            fill="none"
-            stroke="rgba(255,255,255,.35)"
-            strokeWidth={stroke + 4}
-            strokeDasharray={`1.5 ${c}`}
-            strokeDashoffset={-(m / 100) * c}
-          />
-        ))}
+      <svg width={size} height={size} style={{ transform: `rotate(${rotate}deg)` }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#2A2D37" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${arc} ${c}`} />
         <motion.circle
           cx={size / 2}
           cy={size / 2}
@@ -69,61 +59,58 @@ export function RadialScore({ score, critical, size = 132 }: { score: number; cr
           stroke={color}
           strokeWidth={stroke}
           strokeLinecap="round"
-          strokeDasharray={c}
           initial={false}
-          animate={{ strokeDashoffset: c * (1 - score / 100), stroke: color }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-          style={{ filter: `drop-shadow(0 0 6px ${color})` }}
+          animate={{ strokeDasharray: `${Math.max(0.001, (arc * score) / 100)} ${c}`, stroke: color }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         />
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">
-        <div>
-          <div className={cx('font-display font-black leading-none', size > 80 ? 'text-4xl' : 'text-lg')} style={{ color }}>
+        <div className={big ? '-mt-1' : ''}>
+          <div
+            className={cx('font-num font-extrabold leading-none tracking-[-0.04em]', big ? 'text-[44px]' : 'text-[17px]')}
+            style={{ color: big ? '#EDEEF2' : color }}
+          >
             <CountUp value={score} />
           </div>
-          {size > 80 && <div className="hud-label mt-1 !text-[10px]">{label}</div>}
+          {big && (
+            <div className="mt-1.5 text-[13px] font-bold" style={{ color }}>
+              {label}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-/* ─────────── Semáforo con escaneo ─────────── */
+/* ─────────── Veredicto ─────────── */
 const VERDICT = {
-  aplus: { text: 'TRADE A+', sub: 'Cumple el método', color: '#00FF9C', Icon: CheckCircle2 },
-  aceptable: { text: 'ACEPTABLE', sub: 'Opera con advertencias', color: '#FFB800', Icon: TriangleAlert },
-  no_operar: { text: 'NO OPERAR', sub: 'No cumple el método', color: '#FF2E63', Icon: OctagonX },
+  aplus: { text: 'Trade A+', sub: 'Cumple el método', color: '#3DDC97', Icon: CheckCircle2 },
+  aceptable: { text: 'Aceptable', sub: 'Puedes entrar con cuidado', color: '#F5B84A', Icon: TriangleAlert },
+  no_operar: { text: 'No operar', sub: 'No cumple el método', color: '#FF6B7D', Icon: OctagonX },
 } as const;
 
 export function ScanVerdict({ verdict }: { verdict: Verdict }) {
   const v = VERDICT[verdict];
   const reduce = useReducedMotion();
   return (
-    <div className="hud-panel relative overflow-hidden px-4 py-6 text-center" style={{ boxShadow: `inset 0 0 40px ${v.color}22` }}>
-      <motion.div
-        key={verdict}
-        initial={reduce ? false : { clipPath: 'inset(0 0 100% 0)' }}
-        animate={{ clipPath: 'inset(0 0 0% 0)' }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="flex flex-col items-center gap-2"
-      >
-        <v.Icon size={34} color={v.color} aria-hidden />
-        <div className="font-display text-3xl font-black tracking-[0.12em]" style={{ color: v.color, textShadow: `0 0 18px ${v.color}88` }}>
+    <motion.div
+      key={verdict}
+      initial={reduce ? false : { opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: 'spring', damping: 22, stiffness: 260 }}
+      className="flex items-center gap-4 rounded-card p-5"
+      style={{ background: `${v.color}1A` }}
+    >
+      <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full" style={{ background: `${v.color}26` }}>
+        <v.Icon size={28} color={v.color} aria-hidden />
+      </span>
+      <div>
+        <div className="text-[28px] font-extrabold leading-none tracking-[-0.03em]" style={{ color: v.color }}>
           {v.text}
         </div>
-        <div className="hud-label">{v.sub}</div>
-      </motion.div>
-      {!reduce && (
-        <motion.div
-          key={`scan-${verdict}`}
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 h-10"
-          style={{ background: `linear-gradient(180deg, transparent, ${v.color}55, transparent)` }}
-          initial={{ top: '-20%' }}
-          animate={{ top: '110%' }}
-          transition={{ duration: 0.7, ease: 'easeInOut' }}
-        />
-      )}
-    </div>
+        <div className="mt-1.5 text-[14px] font-medium text-ink/80">{v.sub}</div>
+      </div>
+    </motion.div>
   );
 }

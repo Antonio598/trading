@@ -48,10 +48,31 @@ describe('riesgo', () => {
     expect(r.fitsR).toBe(true);
     expect(r.capital).toBe(10050);
   });
-  it('detecta trade que no cabe en la R con 100 acciones', () => {
+  it('permite menos de 100 acciones; solo bloquea si ni 1 cabe en la R', () => {
     const r = calcRisk(50, 49, 'long', 50, 25000);
     expect(r.shares).toBe(50);
-    expect(r.fitsR).toBe(false);
+    expect(r.fitsR).toBe(true);
+    const wide = calcRisk(200, 140, 'long', 50, 25000); // $60 por acción > R de $50
+    expect(wide.shares).toBe(0);
+    expect(wide.fitsR).toBe(false);
+  });
+  it('opciones: contratos = R ÷ (diferencia de prima × 100)', () => {
+    const call = calcRisk(1.2, 0.8, 'long', 50, 25000, 'option'); // $40 de riesgo por contrato
+    expect(call).toMatchObject({ riskPerShare: 40, shares: 1, riskUsd: 40, capital: 120, fitsR: true });
+    // Put: también se compra, el stop va por DEBAJO de la prima aunque la dirección sea corta
+    const put = calcRisk(0.5, 0.25, 'short', 100, 25000, 'option');
+    expect(put).toMatchObject({ stopSideOk: true, shares: 4, riskUsd: 100, capital: 200 });
+    expect(calcRisk(0.5, 0.7, 'short', 100, 25000, 'option').stopSideOk).toBe(false);
+    // Arriesgar toda la prima (stop = 0)
+    expect(calcRisk(0.3, 0, 'long', 100, 25000, 'option')).toMatchObject({ shares: 3, riskUsd: 90 });
+    // Prima demasiado cara: ni 1 contrato cabe
+    expect(calcRisk(3, 2, 'long', 50, 25000, 'option')).toMatchObject({ shares: 0, fitsR: false });
+  });
+  it('opciones: P&L de la salida × 100, siempre ganando si sube la prima', () => {
+    expect(exitPnl(1.2, 1.8, 2, 'long', 'option')).toBe(120);
+    expect(exitPnl(0.5, 0.75, 4, 'short', 'option')).toBe(100); // put
+    expect(exitPnl(0.5, 0.3, 4, 'short', 'option')).toBe(-80);
+    expect(toR(exitPnl(1.2, 0.8, 1, 'long', 'option'), 40)).toBe(-1);
   });
   it('stop del lado equivocado en cortos', () => {
     expect(calcRisk(50, 49, 'short', 50, 0).stopSideOk).toBe(false);

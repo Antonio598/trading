@@ -3,59 +3,46 @@
 @tailwind utilities;
 
 :root {
-  --void: #05070d;
-  --void-2: #0b1020;
-  --cyan: #00e5ff;
-  --bull: #00ff9c;
-  --bear: #ff2e63;
-  --warn: #ffb800;
-  --ink: rgba(255, 255, 255, 0.9);
-  --dim: #8a94a6;
-  --cut: 12px;
+  --bg: #0e0f13;
+  --surface: #17181e;
+  --surface-2: #1f2128;
+  --line: #2a2d37;
+  --accent: #8b7cff;
+  --bull: #3ddc97;
+  --bear: #ff6b7d;
+  --warn: #f5b84a;
+  --ink: #edeef2;
+  --dim: #9097a6;
   color-scheme: dark;
 }
 
 html,
 body {
-  background: var(--void);
+  background: var(--bg);
   color: var(--ink);
-  font-family: Inter, system-ui, sans-serif;
+  font-family: Manrope, system-ui, sans-serif;
+  font-feature-settings: 'tnum' 0;
+  -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
 }
 
 body {
   min-height: 100dvh;
+  /* Un solo halo violeta arriba: da profundidad sin decorar. */
   background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(0, 229, 255, 0.08), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, rgba(0, 255, 156, 0.05), transparent 60%),
-    linear-gradient(180deg, #05070d 0%, #0b1020 100%);
+    radial-gradient(900px 420px at 50% -220px, rgba(139, 124, 255, 0.16), transparent 70%),
+    var(--bg);
   background-attachment: fixed;
-}
-
-/* Cuadrícula + líneas de escaneo muy tenues */
-body::before,
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-body::before {
-  background-image:
-    linear-gradient(rgba(0, 229, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 229, 255, 0.035) 1px, transparent 1px);
-  background-size: 32px 32px;
-  mask-image: radial-gradient(ellipse at center, black 40%, transparent 85%);
-}
-body::after {
-  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 3px);
 }
 
 #root {
   position: relative;
-  z-index: 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* Pantalla de carga */
@@ -64,22 +51,22 @@ body::after {
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 18px;
+  gap: 16px;
 }
 .boot-ring {
-  width: 64px;
-  height: 64px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  border: 3px solid rgba(0, 229, 255, 0.15);
-  border-top-color: var(--cyan);
-  box-shadow: 0 0 24px rgba(0, 229, 255, 0.35);
-  animation: spin 0.9s linear infinite;
+  border: 3px solid rgba(139, 124, 255, 0.18);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
 }
 .boot-text {
-  font-family: Orbitron, sans-serif;
-  letter-spacing: 0.35em;
-  color: var(--cyan);
-  font-size: 13px;
+  font-family: Manrope, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-size: 18px;
 }
 @keyframes spin {
   to {
@@ -88,71 +75,65 @@ body::after {
 }
 
 @layer components {
+  /* Números alineados (precios, R, P&L, horas) */
   .font-num {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
     font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
   }
 
-  /* Panel de vidrio con esquinas cortadas en diagonal */
+  /* Tarjeta: superficie con tono, borde finísimo, esquinas de 20 px */
   .hud-panel {
     position: relative;
-    background: linear-gradient(160deg, rgba(17, 24, 49, 0.72), rgba(11, 16, 32, 0.6));
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
-  }
-  .hud-panel::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    padding: 1px;
-    background: linear-gradient(140deg, rgba(0, 229, 255, 0.45), rgba(138, 148, 166, 0.12) 40%, rgba(0, 229, 255, 0.2));
-    clip-path: inherit;
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
+    background: var(--surface);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
   }
 
+  /* Etiqueta: oración normal, discreta (sin MAYÚSCULAS) */
   .hud-label {
-    font-family: 'Space Grotesk', sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    font-size: 11px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
     color: var(--dim);
   }
 
   .hud-input {
-    @apply w-full bg-void/70 px-3 py-3 text-lg text-ink outline-none transition;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    @apply w-full px-4 py-3.5 text-lg text-ink outline-none transition;
     font-variant-numeric: tabular-nums;
-    border: 1px solid rgba(138, 148, 166, 0.3);
-    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    font-weight: 600;
+    background: var(--surface-2);
+    border: 1px solid transparent;
+    border-radius: 14px;
+  }
+  .hud-input::placeholder {
+    color: #5d6372;
   }
   .hud-input:focus {
-    border-color: var(--cyan);
-    box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.4);
+    border-color: var(--accent);
+    background: #23252e;
   }
 
   .btn-primary {
-    @apply relative inline-flex min-h-[52px] items-center justify-center gap-2 px-5 font-display text-sm font-bold uppercase tracking-[0.16em] transition active:scale-[0.98] disabled:opacity-40 disabled:active:scale-100;
-    color: #031015;
-    background: var(--cyan);
-    box-shadow: 0 0 22px rgba(0, 229, 255, 0.45);
-    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    @apply relative inline-flex min-h-[54px] items-center justify-center gap-2 px-6 text-[16px] font-bold transition active:scale-[0.98] disabled:opacity-35 disabled:active:scale-100;
+    color: #0e0f13;
+    background: var(--accent);
+    border-radius: 16px;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #9a8dff;
   }
   .btn-ghost {
-    @apply relative inline-flex min-h-[48px] items-center justify-center gap-2 px-4 font-grotesk text-sm font-bold uppercase tracking-[0.12em] text-ink transition active:scale-[0.98] disabled:opacity-40;
-    background: rgba(0, 229, 255, 0.06);
-    border: 1px solid rgba(0, 229, 255, 0.35);
-    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    @apply relative inline-flex min-h-[48px] items-center justify-center gap-2 px-4 text-[15px] font-semibold text-ink transition active:scale-[0.98] disabled:opacity-35;
+    background: var(--surface-2);
+    border-radius: 14px;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: #262833;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .boot-ring {
-    animation-duration: 3s;
+    animation-duration: 2.4s;
   }
 }

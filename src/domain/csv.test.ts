@@ -45,7 +45,7 @@ describe('CSV', () => {
     const lines = csv.slice(1).split('\r\n');
     expect(lines).toHaveLength(2);
     expect(lines[0].split(',')).toHaveLength(CSV_HEADERS.length);
-    expect(lines[1]).toContain('2026-11-10,10:05,AAPL,Compra,5,VBS');
+    expect(lines[1]).toContain('2026-11-10,10:05,AAPL,Compra,Acción,5,VBS');
     expect(lines[1]).toContain('101.5000'); // precio de salida promedio
     expect(lines[1]).toContain('100.00,2.00,FOMO,4');
     expect(lines[1]).toContain('"Entré, ""rápido"""');

@@ -39,16 +39,18 @@ export function Login() {
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-sm flex-col justify-center px-4 py-10">
       <div className="mb-8 text-center">
-        <img src="/icons/icon.svg" alt="" className="mx-auto mb-4 h-16 w-16" style={{ filter: 'drop-shadow(0 0 16px rgba(0,229,255,.45))' }} />
-        <h1 className="font-display text-2xl font-black tracking-[0.2em] text-cyan-neon">VELEZ HUD</h1>
-        <p className="mt-1 text-sm text-ink-dim">Checklist · Bitácora · Feedback</p>
+        <img src="/icons/icon.svg" alt="" className="mx-auto mb-5 h-16 w-16 rounded-[20px]" />
+        <h1 className="text-[34px] font-extrabold tracking-[-0.04em] text-ink">
+          Velez<span className="text-accent">.</span>
+        </h1>
+        <p className="mt-1 text-[15px] text-ink-dim">Opera con método, no con impulso.</p>
       </div>
       {!supabaseConfigured && (
         <Notice tone="bear" title="Falta configuración">
           Define VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en .env.local.
         </Notice>
       )}
-      <form onSubmit={submit} className="hud-panel space-y-3 p-5">
+      <form onSubmit={submit} className="hud-panel space-y-4 p-6">
         <Chips
           ariaLabel="Modo"
           cols={2}

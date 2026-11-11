@@ -59,6 +59,12 @@ create table if not exists public.vj_trades (
   opened_at        timestamptz not null default now(),
   closed_at        timestamptz
 );
+-- Opciones (también actualiza instalaciones anteriores sin estas columnas)
+alter table public.vj_trades add column if not exists instrument text not null default 'stock'
+  check (instrument in ('stock', 'option'));
+alter table public.vj_trades add column if not exists multiplier integer not null default 1
+  check (multiplier > 0);
+
 create index if not exists vj_trades_user_created_idx on public.vj_trades (user_id, created_at desc);
 create index if not exists vj_trades_user_status_idx  on public.vj_trades (user_id, status);
 

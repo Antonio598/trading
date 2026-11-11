@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Chips, Notice, NumField, Panel, Stat, cx, fmtR, price, usd } from '../components/hud/primitives';
 import { ERROR_GROUPS } from '../domain/errors';
 import { CRITICAL_TEXT } from '../domain/rules';
-import { exitPnl, toR } from '../domain/risk';
+import { exitPnl, toR, unitLabel } from '../domain/risk';
 import { SETUP_BY_ID } from '../domain/setups';
 import { dt, type Emotion, type ExitReason, type TradeRecord } from '../domain/types';
 import { tradeTotals, useJournal } from '../state/journal';
@@ -76,7 +76,7 @@ function CloseTradeInner({ trade }: { trade: TradeRecord }) {
 
   const preview = useMemo(() => {
     if (px == null || !shares) return null;
-    const p = exitPnl(Number(trade.entry), px, shares, trade.direction);
+    const p = exitPnl(Number(trade.entry), px, shares, trade.direction, trade.instrument);
     return { pnl: p, r: toR(p, Number(trade.r_value)) };
   }, [px, shares, trade]);
 
@@ -96,7 +96,7 @@ function CloseTradeInner({ trade }: { trade: TradeRecord }) {
   const setup = SETUP_BY_ID[trade.setup];
 
   return (
-    <div className="space-y-3 pb-24">
+    <div className="space-y-4 pb-28">
       <Link to="/trades" className="inline-flex items-center gap-1 text-sm text-ink-dim">
         <ChevronLeft size={16} /> Trades
       </Link>
@@ -104,7 +104,7 @@ function CloseTradeInner({ trade }: { trade: TradeRecord }) {
       <Panel>
         <div className="flex items-center justify-between">
           <div>
-            <div className="font-display text-2xl font-bold">{trade.symbol}</div>
+            <div className="tracking-[-0.02em] text-2xl font-bold">{trade.symbol}</div>
             <div className="text-xs text-ink-dim">
               <span className={trade.direction === 'long' ? 'text-bull' : 'text-bear'}>{trade.direction === 'long' ? 'LARGO' : 'CORTO'}</span> ·{' '}
               {dt(setup.label, trade.direction)} · {trade.timeframe}m · score {trade.quality_score}
@@ -115,10 +115,10 @@ function CloseTradeInner({ trade }: { trade: TradeRecord }) {
             <div className="font-num text-xs text-ink-dim">{usd(pnl)}</div>
           </div>
         </div>
-        <div className="mt-3 grid grid-cols-4 gap-2 border-t border-white/5 pt-3">
+        <div className="mt-3 grid grid-cols-4 gap-2 border-t border-line pt-3">
           <Stat label="Entrada" value={price(trade.entry)} />
           <Stat label="Stop" value={price(trade.stop)} tone="bear" />
-          <Stat label="Acciones" value={trade.shares} />
+          <Stat label={trade.instrument === 'option' ? 'Contratos' : 'Acciones'} value={trade.shares} />
           <Stat label="1R" value={usd(Number(trade.r_value), 0)} tone="cyan" />
         </div>
         {(trade.t1 || trade.t2 || trade.t3) && (
@@ -155,10 +155,10 @@ function CloseTradeInner({ trade }: { trade: TradeRecord }) {
       )}
 
       {remaining > 0 && (
-        <Panel title="¿A qué precio saliste?" hint={`Te quedan ${remaining} acciones. Si saliste por partes, registra cada parte.`}>
+        <Panel title="¿A qué precio saliste?" hint={`Te quedan ${remaining} ${unitLabel(trade.instrument, remaining)}. Si saliste por partes, registra cada parte.`}>
           <div className="grid grid-cols-2 gap-2">
-            <NumField label="Precio" prefix="$" value={px} onChange={setPx} />
-            <NumField label="Acciones" integer value={shares} onChange={setShares} />
+            <NumField label={trade.instrument === 'option' ? 'Prima de salida' : 'Precio'} prefix="$" value={px} onChange={setPx} />
+            <NumField label={trade.instrument === 'option' ? 'Contratos' : 'Acciones'} integer value={shares} onChange={setShares} />
           </div>
           <div className="mt-2">
             <Chips
@@ -179,14 +179,14 @@ function CloseTradeInner({ trade }: { trade: TradeRecord }) {
             <Chips ariaLabel="Motivo de salida" cols={4} size="sm" options={REASONS} value={reason} onChange={setReason} />
           </div>
           {preview && (
-            <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-3">
+            <div className="mt-3 flex items-center justify-between border-t border-line pt-3">
               <span className="hud-label">Resultado</span>
               <span className={cx('font-num text-lg font-bold', preview.r >= 0 ? 'text-bull' : 'text-bear')}>
                 {fmtR(preview.r)} · {usd(preview.pnl)}
               </span>
             </div>
           )}
-          {shares != null && shares > remaining && <p className="mt-2 text-xs text-bear">No puedes cerrar más de {remaining} acciones.</p>}
+          {shares != null && shares > remaining && <p className="mt-2 text-xs text-bear">No puedes cerrar más de {remaining} {unitLabel(trade.instrument, remaining)}.</p>}
           <button className="btn-primary mt-3 w-full" disabled={!canExit || busy} onClick={submitExit}>
             <Save size={18} /> {shares === remaining ? 'Cerrar trade' : 'Registrar parcial'}
           </button>
@@ -252,14 +252,14 @@ function ReviewForm({ trade, mlpt, onSave }: { trade: TradeRecord; mlpt: number;
             const count = g.items.filter((i) => errors.includes(i.id)).length;
             const open = openGroup === g.id;
             return (
-              <div key={g.id} className="border border-white/5">
+              <div key={g.id} className="overflow-hidden rounded-ctl bg-void-3">
                 <button
                   type="button"
                   aria-expanded={open}
                   onClick={() => setOpenGroup(open ? null : g.id)}
                   className="flex min-h-[48px] w-full items-center justify-between px-3 text-left"
                 >
-                  <span className="font-grotesk font-bold">{g.label}</span>
+                  <span className="font-bold">{g.label}</span>
                   <span className="flex items-center gap-2">
                     {count > 0 && <span className="font-num bg-bear/20 px-1.5 text-xs font-bold text-bear">{count}</span>}
                     <ChevronDown size={16} className={cx('transition', open && 'rotate-180')} />

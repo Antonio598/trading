@@ -42,22 +42,22 @@ export function Plan() {
     up({ timeframes: p.timeframes.includes(t) ? p.timeframes.filter((x) => x !== t) : [...p.timeframes, t].sort((a, b) => a - b) });
 
   return (
-    <div className="space-y-3 pb-24">
-      <h1 className="font-display text-xl font-bold tracking-wider text-cyan-neon">MI PLAN</h1>
+    <div className="space-y-4 pb-28">
+      <h1 className="text-[30px] font-extrabold leading-tight tracking-[-0.03em] text-ink">Mi plan</h1>
 
       {firstTime && (
         <div className="hud-panel space-y-2 p-4">
-          <div className="font-display text-base font-bold text-ink">Bienvenido 👋</div>
+          <div className="tracking-[-0.02em] text-base font-bold text-ink">Bienvenido 👋</div>
           <p className="text-sm text-ink-dim">La app funciona en 3 pasos:</p>
           <ol className="space-y-1.5 text-sm text-ink">
             <li>
-              <b className="text-cyan-neon">1.</b> Antes de entrar a un trade, llena la <b>checklist</b>. Te dice si el trade vale la pena.
+              <b className="text-accent">1.</b> Antes de entrar a un trade, llena la <b>checklist</b>. Te dice si el trade vale la pena.
             </li>
             <li>
-              <b className="text-cyan-neon">2.</b> Cuando salgas, <b>cierra el trade</b> y marca qué hiciste mal (si aplica).
+              <b className="text-accent">2.</b> Cuando salgas, <b>cierra el trade</b> y marca qué hiciste mal (si aplica).
             </li>
             <li>
-              <b className="text-cyan-neon">3.</b> Revisa <b>Progreso</b> para ver en qué estás fallando.
+              <b className="text-accent">3.</b> Revisa <b>Progreso</b> para ver en qué estás fallando.
             </li>
           </ol>
           <p className="text-sm text-ink-dim">Primero, cuéntanos cuánto arriesgas. Solo lo haces una vez.</p>
@@ -72,7 +72,7 @@ export function Plan() {
           <Field
             hint={
               <>
-                Lo máximo que aceptas perder <b className="text-ink">en un solo trade</b>. A esto se le llama <b className="text-cyan-neon">R</b>: si
+                Lo máximo que aceptas perder <b className="text-ink">en un solo trade</b>. A esto se le llama <b className="text-accent">R</b>: si
                 pierdes esto, perdiste "1R". Mantenlo igual casi siempre.
               </>
             }
@@ -91,7 +91,7 @@ export function Plan() {
           {(mlpt === 'bajo' || mlpt === 'alto') && (
             <Notice tone="warn" title={`Tu MLPT es el ${pct}% de tu pérdida del día`}>
               Debe estar entre {usd(p.max_daily_loss * 0.25, 0)} y {usd(p.max_daily_loss * 0.5, 0)}.{' '}
-              <button className="font-bold text-cyan-neon underline" onClick={() => up({ mlpt: suggestedMlpt })}>
+              <button className="font-bold text-accent underline" onClick={() => up({ mlpt: suggestedMlpt })}>
                 Usar {usd(suggestedMlpt, 0)}
               </button>
             </Notice>

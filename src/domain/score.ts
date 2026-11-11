@@ -139,7 +139,7 @@ export function evaluate(c: ChecklistState, profile: Profile, day: DayContext): 
     warnings.push({ id: 'stop200', text: 'Tu stop por evento queda en la 200mm: considera usar el MLPT.' });
 
   // ── Riesgo y reglas críticas ──
-  const risk = calcRisk(c.entry, c.stop, dir, profile.r_value, profile.account_size);
+  const risk = calcRisk(c.entry, c.stop, dir, profile.r_value, profile.account_size, c.instrument ?? 'stock');
   if (risk.exceedsAccount)
     warnings.push({
       id: 'capital',

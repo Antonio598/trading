@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Check, CircleHelp, Info, OctagonX, X } from 'lucide-react';
+import { AlertTriangle, Check, ChevronDown, CircleHelp, Info, OctagonX, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { create } from 'zustand';
 import { RULES } from '../../domain/rules';
@@ -15,7 +15,7 @@ export function vibrate(pattern: number | number[] = 12) {
   }
 }
 
-/* ─────────── Panel ─────────── */
+/* ─────────── Tarjeta ─────────── */
 export function Panel({
   title,
   hint,
@@ -33,17 +33,17 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section className={cx('hud-panel p-4', className)}>
+    <section className={cx('hud-panel p-5', className)}>
       {(title || right) && (
-        <header className="mb-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              {title && <h2 className="hud-label text-cyan-neon/90">{title}</h2>}
+        <header className="mb-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-1">
+              {title && <h2 className="text-[17px] font-bold leading-tight tracking-[-0.01em] text-ink">{title}</h2>}
               {help && <HelpButton id={help} />}
             </div>
-            {right}
+            {right && <div className="shrink-0 pt-0.5">{right}</div>}
           </div>
-          {hint && <p className="mt-1 text-sm leading-snug text-ink-dim">{hint}</p>}
+          {hint && <p className="mt-1 text-[14px] leading-snug text-ink-dim">{hint}</p>}
         </header>
       )}
       {children}
@@ -67,19 +67,19 @@ export function Fold({
 }) {
   return (
     <details className="hud-panel group" open={defaultOpen}>
-      <summary className="flex min-h-[56px] cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-[64px] cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0">
-          <span className="hud-label block text-cyan-neon/90">{title}</span>
-          {hint && <span className="mt-0.5 block text-xs text-ink-dim">{hint}</span>}
+          <span className="block text-[16px] font-bold text-ink">{title}</span>
+          {hint && <span className="mt-0.5 block text-[13px] text-ink-dim">{hint}</span>}
         </span>
         <span className="flex shrink-0 items-center gap-2">
           {badge}
-          <span className="text-lg text-ink-dim transition group-open:rotate-45" aria-hidden>
-            +
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-void-3 text-ink-dim transition group-open:rotate-180" aria-hidden>
+            <ChevronDown size={16} />
           </span>
         </span>
       </summary>
-      <div className="px-4 pb-4">{children}</div>
+      <div className="px-5 pb-5">{children}</div>
     </details>
   );
 }
@@ -111,7 +111,7 @@ export function HelpButton({ id }: { id: string }) {
         e.stopPropagation();
         open(id, helpDirection.current);
       }}
-      className="grid h-8 w-8 shrink-0 place-items-center text-ink-dim transition hover:text-cyan-neon"
+      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-ink-dim transition hover:bg-void-3 hover:text-accent"
     >
       <CircleHelp size={17} />
     </button>
@@ -125,7 +125,7 @@ export function RuleSheet() {
     <AnimatePresence>
       {rule && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 sm:items-center"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -135,23 +135,22 @@ export function RuleSheet() {
             role="dialog"
             aria-modal="true"
             aria-label={rule.title}
-            className="hud-panel w-full max-w-md p-5"
-            initial={{ y: 40 }}
+            className="w-full max-w-md rounded-t-[28px] bg-void-2 px-6 pb-[max(env(safe-area-inset-bottom),24px)] pt-3 sm:rounded-[28px] sm:pb-6"
+            initial={{ y: 60 }}
             animate={{ y: 0 }}
-            exit={{ y: 40 }}
-            transition={{ duration: 0.2 }}
+            exit={{ y: 60 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 340 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-2 flex items-start justify-between gap-3">
-              <div>
-                <div className="hud-label">Regla del manual</div>
-                <h3 className="mt-1 font-display text-lg font-bold text-cyan-neon">{rule.title}</h3>
-              </div>
-              <button aria-label="Cerrar" onClick={close} className="grid h-10 w-10 place-items-center text-ink-dim">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line sm:hidden" aria-hidden />
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <h3 className="text-[22px] font-extrabold leading-tight tracking-[-0.02em] text-ink">{rule.title}</h3>
+              <button aria-label="Cerrar" onClick={close} className="-mr-2 grid h-10 w-10 shrink-0 place-items-center rounded-full text-ink-dim hover:bg-void-3">
                 <X size={20} />
               </button>
             </div>
-            <p className="leading-relaxed text-ink">{dt(rule.body, dir)}</p>
+            <p className="text-[16px] leading-relaxed text-ink/90">{dt(rule.body, dir)}</p>
+            <p className="mt-4 text-[13px] text-ink-dim">Regla del Método Velez</p>
           </motion.div>
         </motion.div>
       )}
@@ -159,7 +158,7 @@ export function RuleSheet() {
   );
 }
 
-/* ─────────── Casilla grande con pulso ─────────── */
+/* ─────────── Casilla grande ─────────── */
 export function NeonCheck({
   checked,
   onChange,
@@ -189,34 +188,39 @@ export function NeonCheck({
           onChange(!checked);
         }}
         className={cx(
-          'group relative flex min-h-[56px] flex-1 items-center gap-3 px-3 py-2.5 text-left transition-colors disabled:opacity-50',
-          checked ? 'bg-cyan-neon/[0.07]' : 'bg-white/[0.02] hover:bg-white/[0.04]',
+          'flex min-h-[60px] flex-1 items-center gap-3.5 rounded-ctl px-4 py-3 text-left transition-colors disabled:opacity-50',
+          checked ? 'bg-accent/[0.12]' : 'bg-void-3 hover:bg-[#252731]',
         )}
-        style={{ clipPath: 'polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)' }}
       >
         <motion.span
           className={cx(
-            'relative grid h-7 w-7 shrink-0 place-items-center border-2',
-            checked ? 'border-cyan-neon bg-cyan-neon text-void' : critical ? 'border-bear/70' : 'border-ink-dim/60',
+            'grid h-6 w-6 shrink-0 place-items-center rounded-[8px] border-2 transition-colors',
+            checked ? 'border-accent bg-accent text-void' : critical ? 'border-bear/70' : 'border-ink-dim/50',
           )}
-          animate={checked ? { boxShadow: ['0 0 0px rgba(0,229,255,0)', '0 0 22px rgba(0,229,255,.85)', '0 0 10px rgba(0,229,255,.4)'] } : { boxShadow: '0 0 0px rgba(0,229,255,0)' }}
-          transition={{ duration: 0.35 }}
+          animate={checked ? { scale: [1, 1.18, 1] } : { scale: 1 }}
+          transition={{ duration: 0.22 }}
         >
-          {checked && <Check size={18} strokeWidth={3.5} />}
+          {checked && <Check size={15} strokeWidth={3.5} />}
         </motion.span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[15px] leading-snug text-ink">
-            {label}
-            {critical && (
-              <span className="ml-2 inline-flex items-center gap-1 align-middle text-[10px] font-bold uppercase tracking-wider text-bear">
-                <OctagonX size={11} /> Crítica
-              </span>
-            )}
-          </span>
-          {sub && <span className="mt-0.5 block text-xs text-ink-dim">{sub}</span>}
+          <span className="block text-[15px] font-medium leading-snug text-ink">{label}</span>
+          {(sub || critical) && (
+            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-ink-dim">
+              {critical && (
+                <span className="inline-flex items-center gap-1 font-semibold text-bear">
+                  <OctagonX size={12} aria-hidden /> Obligatoria
+                </span>
+              )}
+              {sub && <span>{sub}</span>}
+            </span>
+          )}
         </span>
       </button>
-      {help && <HelpButton id={help} />}
+      {help && (
+        <div className="flex items-center">
+          <HelpButton id={help} />
+        </div>
+      )}
     </div>
   );
 }
@@ -231,10 +235,10 @@ export interface ChipOption<T extends string | number> {
 }
 
 const toneOn: Record<string, string> = {
-  cyan: 'border-cyan-neon text-cyan-neon bg-cyan-neon/10 shadow-glow',
-  bull: 'border-bull text-bull bg-bull/10 shadow-glow-bull',
-  bear: 'border-bear text-bear bg-bear/10 shadow-glow-bear',
-  warn: 'border-warn text-warn bg-warn/10',
+  cyan: 'bg-accent text-void',
+  bull: 'bg-bull text-void',
+  bear: 'bg-bear text-void',
+  warn: 'bg-warn text-void',
 };
 
 export function Chips<T extends string | number>({
@@ -255,6 +259,7 @@ export function Chips<T extends string | number>({
   ariaLabel?: string;
 }) {
   const isOn = (id: T) => (Array.isArray(value) ? value.includes(id) : value === id);
+  const hasSub = options.some((o) => o.sub);
   return (
     <div
       role={multi ? 'group' : 'radiogroup'}
@@ -273,19 +278,20 @@ export function Chips<T extends string | number>({
             disabled={o.disabled}
             onClick={() => onChange(o.id)}
             className={cx(
-              'flex flex-col items-center justify-center gap-0.5 border px-2 text-center font-grotesk font-bold transition disabled:opacity-30',
-              size === 'sm' && 'min-h-[40px] text-xs',
-              size === 'md' && 'min-h-[48px] text-sm',
-              size === 'lg' && 'min-h-[64px] text-base uppercase tracking-widest',
-              on ? toneOn[o.tone ?? 'cyan'] : 'border-ink-dim/25 bg-white/[0.02] text-ink-dim hover:text-ink',
+              'flex flex-col items-center justify-center gap-0.5 px-3 text-center font-semibold transition disabled:opacity-30',
+              hasSub || size === 'lg' ? 'rounded-ctl' : 'rounded-full',
+              size === 'sm' && 'min-h-[40px] text-[13px]',
+              size === 'md' && 'min-h-[46px] text-[14px]',
+              size === 'lg' && 'min-h-[68px] text-[17px] font-bold',
+              hasSub && 'py-2.5',
+              on ? toneOn[o.tone ?? 'cyan'] : 'bg-void-3 text-ink/80 hover:bg-[#252731] hover:text-ink',
             )}
-            style={{ clipPath: 'polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)' }}
           >
-            <span className="flex items-center gap-1">
-              {on && multi && <Check size={13} strokeWidth={3} />}
+            <span className="flex items-center gap-1.5 whitespace-nowrap">
+              {on && multi && <Check size={14} strokeWidth={3} className="shrink-0" />}
               {o.label}
             </span>
-            {o.sub && <span className="text-[10px] font-normal normal-case tracking-normal opacity-80">{o.sub}</span>}
+            {o.sub && <span className={cx('text-[12px] font-medium leading-tight', on ? 'opacity-75' : 'text-ink-dim')}>{o.sub}</span>}
           </button>
         );
       })}
@@ -297,22 +303,22 @@ export function Chips<T extends string | number>({
 export function Notice({ tone, title, children }: { tone: 'warn' | 'bear' | 'info' | 'bull'; title?: string; children: ReactNode }) {
   const Icon = tone === 'bear' ? OctagonX : tone === 'warn' ? AlertTriangle : tone === 'bull' ? Check : Info;
   const c = {
-    warn: 'border-warn/60 bg-warn/[0.08] text-warn',
-    bear: 'border-bear/70 bg-bear/[0.09] text-bear',
-    info: 'border-cyan-neon/40 bg-cyan-neon/[0.06] text-cyan-neon',
-    bull: 'border-bull/50 bg-bull/[0.07] text-bull',
+    warn: 'bg-warn/[0.10] text-warn',
+    bear: 'bg-bear/[0.11] text-bear',
+    info: 'bg-accent/[0.10] text-accent-soft',
+    bull: 'bg-bull/[0.10] text-bull',
   }[tone];
   return (
     <motion.div
       initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
-      className={cx('flex gap-2.5 border-l-2 px-3 py-2.5 text-sm', c)}
+      className={cx('flex gap-3 rounded-ctl px-4 py-3 text-[14px]', c)}
       role={tone === 'bear' ? 'alert' : 'status'}
     >
       <Icon size={18} className="mt-0.5 shrink-0" aria-hidden />
       <div className="min-w-0">
         {title && <div className="font-bold">{title}</div>}
-        <div className="leading-snug text-ink/90">{children}</div>
+        <div className="leading-snug text-ink/85">{children}</div>
       </div>
     </motion.div>
   );
@@ -338,11 +344,11 @@ export function NumField({
 }) {
   return (
     <label className="block">
-      <span className="hud-label mb-1.5 block">{label}</span>
+      <span className="hud-label mb-2 block">{label}</span>
       <span className="relative block">
-        {prefix && <span className="font-num pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-dim">{prefix}</span>}
+        {prefix && <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-ink-dim">{prefix}</span>}
         <input
-          className={cx('hud-input', prefix && 'pl-7')}
+          className={cx('hud-input', prefix && 'pl-8')}
           type="number"
           inputMode={integer ? 'numeric' : 'decimal'}
           step={step}
@@ -358,13 +364,13 @@ export function NumField({
   );
 }
 
-/* ─────────── Fila clave-valor numérica ─────────── */
+/* ─────────── Dato ─────────── */
 export function Stat({ label, value, tone }: { label: string; value: ReactNode; tone?: 'bull' | 'bear' | 'warn' | 'cyan' }) {
-  const c = tone ? { bull: 'text-bull', bear: 'text-bear', warn: 'text-warn', cyan: 'text-cyan-neon' }[tone] : 'text-ink';
+  const c = tone ? { bull: 'text-bull', bear: 'text-bear', warn: 'text-warn', cyan: 'text-accent' }[tone] : 'text-ink';
   return (
     <div className="min-w-0">
       <div className="hud-label truncate">{label}</div>
-      <div className={cx('font-num mt-0.5 truncate text-lg font-semibold', c)}>{value}</div>
+      <div className={cx('font-num mt-1 truncate text-[19px] font-bold tracking-[-0.01em]', c)}>{value}</div>
     </div>
   );
 }
