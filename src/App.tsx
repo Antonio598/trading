@@ -5,6 +5,7 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { ETClock } from './components/hud/ETClock';
 import { RuleSheet, cx } from './components/hud/primitives';
+import { InstallBanner } from './components/InstallApp';
 import { supabase } from './lib/supabase';
 import { Checklist } from './pages/checklist/Checklist';
 import { CloseTrade } from './pages/CloseTrade';
@@ -101,6 +102,7 @@ function Shell() {
         </div>
       </header>
       <main className="mx-auto max-w-xl px-5 pt-4">
+        <InstallBanner />
         <Routes>
           <Route path="/" element={hasPlan ? <Checklist /> : <Navigate to="/plan" replace />} />
           <Route path="/trades" element={<Trades />} />

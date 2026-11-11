@@ -5,6 +5,7 @@ import { Chips, NeonCheck, Notice, NumField, Panel, usd } from '../components/hu
 import { mlptStatus } from '../domain/risk';
 import { DEFAULT_PROFILE, type Profile, type Timeframe } from '../domain/types';
 import { supabase } from '../lib/supabase';
+import { InstallPanel } from '../components/InstallApp';
 import { useJournal } from '../state/journal';
 
 function Field({ children, hint }: { children: React.ReactNode; hint: React.ReactNode }) {
@@ -120,6 +121,8 @@ export function Plan() {
         <Save size={18} /> {saved ? 'Guardado ✓' : firstTime ? 'Guardar y empezar' : 'Guardar'}
       </button>
       {!valid && <p className="text-center text-xs text-ink-dim">Llena tu cuenta, tu R y tu pérdida máxima del día.</p>}
+
+      <InstallPanel />
 
       {!firstTime && (
         <Panel title="Cuenta">
